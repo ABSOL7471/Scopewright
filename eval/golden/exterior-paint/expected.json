@@ -1,0 +1,27 @@
+{
+  "case": "exterior-paint",
+  "status": "DRAFT - AI-drafted, pending replacement with a real example",
+  "expected_elements": [
+    "scrape",
+    "prime",
+    "caulk",
+    "power wash",
+    "shutter",
+    "lead"
+  ],
+  "expected_exclusions": [
+    "surface defects",
+    "rot"
+  ],
+  "forbidden_inventions": [
+    "$",
+    "sherwin",
+    "benjamin moore",
+    "navy"
+  ],
+  "expected_open_questions": [
+    "color",
+    "shutter",
+    "garage door"
+  ]
+}

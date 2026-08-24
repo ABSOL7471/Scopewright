@@ -1,0 +1,25 @@
+{
+  "case": "basement-finish",
+  "status": "DRAFT - AI-drafted, pending replacement with a real example",
+  "expected_elements": [
+    "frame",
+    "insulat",
+    "drywall",
+    "recessed",
+    "egress"
+  ],
+  "expected_exclusions": [
+    "wet bar",
+    "waterproof"
+  ],
+  "forbidden_inventions": [
+    "$",
+    "dricore",
+    "9 foot"
+  ],
+  "expected_open_questions": [
+    "ceiling",
+    "floor",
+    "egress"
+  ]
+}

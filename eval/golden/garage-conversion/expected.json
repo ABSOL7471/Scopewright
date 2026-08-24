@@ -1,0 +1,27 @@
+{
+  "case": "garage-conversion",
+  "status": "DRAFT - AI-drafted, pending replacement with a real example",
+  "expected_elements": [
+    "insulat",
+    "drywall",
+    "garage door",
+    "window",
+    "mini split",
+    "flooring"
+  ],
+  "expected_exclusions": [
+    "panel",
+    "upgrade"
+  ],
+  "forbidden_inventions": [
+    "$",
+    "mitsubishi",
+    "daikin",
+    "three windows"
+  ],
+  "expected_open_questions": [
+    "window",
+    "panel",
+    "egress"
+  ]
+}

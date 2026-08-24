@@ -1,0 +1,27 @@
+{
+  "case": "small-addition",
+  "status": "DRAFT - AI-drafted, pending replacement with a real example",
+  "expected_elements": [
+    "addition",
+    "crawl",
+    "roof",
+    "window",
+    "vanity",
+    "siding"
+  ],
+  "expected_exclusions": [
+    "engineering",
+    "concealed"
+  ],
+  "forbidden_inventions": [
+    "$",
+    "280 sq",
+    "hardie"
+  ],
+  "expected_open_questions": [
+    "survey",
+    "capacity",
+    "siding",
+    "fixture"
+  ]
+}

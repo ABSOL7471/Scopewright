@@ -1,0 +1,26 @@
+{
+  "case": "flooring-replacement",
+  "status": "DRAFT - AI-drafted, pending replacement with a real example",
+  "expected_elements": [
+    "carpet",
+    "laminate",
+    "LVP",
+    "transition",
+    "subfloor",
+    "baseboard"
+  ],
+  "expected_exclusions": [
+    "piano",
+    "kitchen"
+  ],
+  "forbidden_inventions": [
+    "$",
+    "pergo",
+    "coretec",
+    "1200 sq"
+  ],
+  "expected_open_questions": [
+    "product",
+    "baseboard"
+  ]
+}

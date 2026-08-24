@@ -1,0 +1,24 @@
+{
+  "case": "water-damage",
+  "status": "DRAFT - AI-drafted, pending replacement with a real example",
+  "expected_elements": [
+    "drywall",
+    "insulation",
+    "ceiling",
+    "paint"
+  ],
+  "expected_exclusions": [
+    "plumbing",
+    "mold",
+    "refinish"
+  ],
+  "forbidden_inventions": [
+    "$",
+    "servpro",
+    "10x10"
+  ],
+  "expected_open_questions": [
+    "staining",
+    "hardwood"
+  ]
+}

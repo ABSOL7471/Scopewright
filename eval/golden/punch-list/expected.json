@@ -1,0 +1,28 @@
+{
+  "case": "punch-list",
+  "status": "DRAFT - AI-drafted, pending replacement with a real example",
+  "expected_elements": [
+    "faucet",
+    "strike",
+    "patch",
+    "caulk",
+    "smoke detector",
+    "GFCI",
+    "disposal",
+    "closer"
+  ],
+  "expected_exclusions": [
+    "repaint",
+    "panel"
+  ],
+  "forbidden_inventions": [
+    "$",
+    "kwikset",
+    "insinkerator"
+  ],
+  "expected_open_questions": [
+    "color match",
+    "hardwired",
+    "faucet"
+  ]
+}

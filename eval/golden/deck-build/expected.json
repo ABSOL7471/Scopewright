@@ -1,0 +1,28 @@
+{
+  "case": "deck-build",
+  "status": "DRAFT - AI-drafted, pending replacement with a real example",
+  "expected_elements": [
+    "deck",
+    "ledger",
+    "railing",
+    "stairs",
+    "footings",
+    "permit",
+    "flashing"
+  ],
+  "expected_exclusions": [
+    "rot",
+    "landscap"
+  ],
+  "forbidden_inventions": [
+    "$",
+    "trex",
+    "timbertech",
+    "192 sq"
+  ],
+  "expected_open_questions": [
+    "dimensions",
+    "decking",
+    "frost"
+  ]
+}

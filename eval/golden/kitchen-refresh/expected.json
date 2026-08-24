@@ -1,0 +1,27 @@
+{
+  "case": "kitchen-refresh",
+  "status": "DRAFT - AI-drafted, pending replacement with a real example",
+  "expected_elements": [
+    "cabinet",
+    "paint",
+    "counter",
+    "backsplash",
+    "sink",
+    "dishwasher"
+  ],
+  "expected_exclusions": [
+    "floor",
+    "appliance"
+  ],
+  "forbidden_inventions": [
+    "$",
+    "granite",
+    "bosch",
+    "kitchenaid"
+  ],
+  "expected_open_questions": [
+    "color",
+    "counter",
+    "under-cab"
+  ]
+}

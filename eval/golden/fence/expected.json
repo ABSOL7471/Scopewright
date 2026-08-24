@@ -1,0 +1,25 @@
+{
+  "case": "fence",
+  "status": "DRAFT - AI-drafted, pending replacement with a real example",
+  "expected_elements": [
+    "privacy",
+    "gate",
+    "chain link",
+    "811",
+    "posts"
+  ],
+  "expected_exclusions": [
+    "survey",
+    "landscap"
+  ],
+  "forbidden_inventions": [
+    "$",
+    "vinyl fence",
+    "130 lf"
+  ],
+  "expected_open_questions": [
+    "measure",
+    "cedar",
+    "survey"
+  ]
+}

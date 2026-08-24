@@ -1,0 +1,31 @@
+{
+  "case": "bathroom-gut",
+  "status": "DRAFT - AI-drafted, pending replacement with a real example",
+  "expected_elements": [
+    "vanity",
+    "toilet",
+    "tile",
+    "vent fan",
+    "GFCI",
+    "sconces",
+    "window",
+    "studs"
+  ],
+  "expected_exclusions": [
+    "concealed conditions",
+    "supply"
+  ],
+  "forbidden_inventions": [
+    "$",
+    "kohler",
+    "delta",
+    "moen",
+    "72-inch",
+    "72 inch"
+  ],
+  "expected_open_questions": [
+    "joist",
+    "subfloor",
+    "tub"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "case": "window-replacement",
+  "status": "DRAFT - AI-drafted, pending replacement with a real example",
+  "expected_elements": [
+    "insert",
+    "picture window",
+    "full-frame",
+    "vinyl",
+    "haul",
+    "sill"
+  ],
+  "expected_exclusions": [
+    "rot",
+    "window treatment"
+  ],
+  "forbidden_inventions": [
+    "$",
+    "andersen",
+    "pella",
+    "marvin"
+  ],
+  "expected_open_questions": [
+    "size",
+    "staging",
+    "grid"
+  ]
+}
