@@ -33,6 +33,20 @@ PORT = int(os.environ.get("SCOPEWRIGHT_PORT", "8431"))
 MAX_NOTES = 20000  # characters; a job walk is not a novel
 
 
+def load_company():
+    """Optional company.json beside this file puts your letterhead on the
+    proposal: {"name", "license", "phone", "email", "location"} - all keys
+    optional. Ships absent (generic proposals); see company.example.json.
+    The file is gitignored so your details stay local."""
+    path = os.path.join(HERE, "company.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
 # ---------------------------------------------------------------- rendering
 
 PROPOSAL_CSS = """
@@ -41,6 +55,8 @@ PROPOSAL_CSS = """
          background: #e8e5df; line-height: 1.55; }
   .sheet { max-width: 7.6in; margin: 24px auto; background: #fdfcf9;
            padding: 0.9in 0.85in; box-shadow: 0 2px 14px rgba(0,0,0,.14); }
+  .company { font-size: 13px; margin-bottom: 14px; letter-spacing: .02em; }
+  .company-meta { color: #6b6353; font-size: 11px; }
   header { border-bottom: 3px double #8a7d66; padding-bottom: 14px;
            margin-bottom: 22px; }
   .kicker { font-family: Arial, Helvetica, sans-serif; font-size: 11px;
@@ -98,7 +114,16 @@ def render_proposal(scope):
     w("<title>Scope of Work — %s</title>" % e(scope.get("project_title", "")))
     w("<style>%s</style></head><body><div class='sheet'>" % PROPOSAL_CSS)
 
-    w("<header><div class='kicker'>Scope of Work</div>")
+    company = load_company()
+    w("<header>")
+    if company.get("name"):
+        line2 = " · ".join(
+            e(str(company[k])) for k in ("license", "phone", "email", "location")
+            if company.get(k))
+        w("<div class='company'><strong>%s</strong>%s</div>"
+          % (e(str(company["name"])),
+             ("<br><span class='company-meta'>%s</span>" % line2) if line2 else ""))
+    w("<div class='kicker'>Scope of Work</div>")
     w("<h1>%s</h1>" % e(scope.get("project_title", "")))
     w("<div class='meta'>Prepared %s &nbsp;·&nbsp; Draft for review — "
       "not a contract until signed</div></header>" % e(today))

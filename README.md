@@ -107,6 +107,12 @@ the things under test.
 
 *(placeholder — screenshots landing with the first real-GC golden case)*
 
+## Your letterhead
+
+Copy `company.example.json` to `company.json` (gitignored — your details stay
+local) and the printable proposal carries your company name, license, and
+contact block. Without it, proposals render generic.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

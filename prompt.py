@@ -57,6 +57,13 @@ Every scope gets trade-standard exclusions relevant to the work described. Examp
 - any project -> "hazardous material abatement (asbestos, lead, mold) if discovered"
 Pick the ones that fit the trades actually in the notes; write them in the contractor's own professional voice.
 
+STANDING EXCLUSIONS - include on EVERY scope, adapted to the job's wording
+(these come from working general-contractor practice; they are always present):
+- correction of concealed conditions discovered behind walls, under floors, or above ceilings
+- correction of pre-existing code violations discovered during the work
+- repair, patching, or painting outside the defined work area
+- permit fees, utility fees, and engineering costs unless specifically noted in the notes
+
 ALLOWANCES
 When the notes mention a client-selectable material or fixture WITHOUT a specific selection (tile, flooring, fixtures, countertops, paint colors, hardware), create an allowance entry. amount_note describes how the amount will be set - never a number you made up.
 
