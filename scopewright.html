@@ -127,7 +127,10 @@ ex'g window stays. no vent fan currently — add one.
 check subfloor once demo'd, felt soft near tub…"></textarea>
       <div class="row">
         <button id="go">Generate scope</button>
+        <button class="ghost" id="photoBtn" style="display:none">📷 Photo of notes</button>
+        <input type="file" id="photoFile" accept="image/*" capture="environment" style="display:none">
         <span id="spin">talking to the model… local models take a minute</span>
+        <span id="photoSpin" style="display:none">reading the photo… check the transcription before generating</span>
       </div>
       <div id="err"></div>
       <div id="repairs"></div>
@@ -170,6 +173,8 @@ async function checkStatus() {
       if (!d.model) {
         st.append(" (install one: ollama pull qwen2.5-coder:7b)");
       }
+      // Capability gate: the photo button exists only when a vision model does.
+      $("photoBtn").style.display = d.vision_model ? "" : "none";
       return;
     }
   } catch (e) { /* server itself down; fall through */ }
@@ -269,6 +274,44 @@ $("go").addEventListener("click", async () => {
   } finally {
     $("go").disabled = false;
     $("spin").className = "";
+  }
+});
+
+// Photo -> transcription -> the NOTES BOX, never straight to generate.
+// A misread word must become a human edit, not a line item.
+$("photoBtn").addEventListener("click", () => $("photoFile").click());
+$("photoFile").addEventListener("change", async () => {
+  const f = $("photoFile").files[0];
+  if (!f) return;
+  $("photoBtn").disabled = true;
+  $("photoSpin").style.display = "";
+  $("err").style.display = "none";
+  try {
+    const dataUrl = await new Promise((res, rej) => {
+      const rd = new FileReader();
+      rd.onload = () => res(rd.result);
+      rd.onerror = () => rej(new Error("could not read the file"));
+      rd.readAsDataURL(f);
+    });
+    const b64 = String(dataUrl).split(",", 2)[1] || "";
+    const r = await fetch("/api/transcribe", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({image: b64})
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || ("HTTP " + r.status));
+    const ta = $("notes");
+    ta.value = (ta.value.trim() ? ta.value.replace(/\s+$/, "") + "\n\n" : "")
+      + d.text;
+    ta.focus();
+  } catch (e) {
+    const box = $("err");
+    box.textContent = "Photo transcription failed: " + e.message;
+    box.style.display = "block";
+  } finally {
+    $("photoBtn").disabled = false;
+    $("photoSpin").style.display = "none";
+    $("photoFile").value = "";
   }
 });
 

@@ -11,6 +11,7 @@ Routes:
     GET  /              the app UI
     GET  /api/status    {ollama, model} - the UI's capability gate
     POST /api/generate  {notes} -> {scope, repairs, model}
+    POST /api/transcribe {image: base64} -> {text, model}  (vision-gated)
     POST /api/render    {scope} -> standalone printable HTML proposal
 
 The render layer is deliberately model-free: the proposal a client receives
@@ -31,6 +32,7 @@ HOST = os.environ.get("SCOPEWRIGHT_HOST", "127.0.0.1")
 PORT = int(os.environ.get("SCOPEWRIGHT_PORT", "8431"))
 
 MAX_NOTES = 20000  # characters; a job walk is not a novel
+MAX_IMAGE_B64 = 14_000_000  # ~10 MB image as base64; a phone photo fits
 
 
 def load_company():
@@ -240,6 +242,22 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(502, {"error": str(e), "ollama": True})
             return self._send(200, {"scope": scope, "repairs": repairs,
                                     "model": model})
+
+        if path == "/api/transcribe":
+            image = body.get("image")
+            if not isinstance(image, str) or not image.strip():
+                return self._send(400, {"error": "image must be a base64"
+                                        " string (no data: prefix)"})
+            if len(image) > MAX_IMAGE_B64:
+                return self._send(400, {"error": "image too large"
+                                        " (max ~10 MB)"})
+            try:
+                text, model = llm.transcribe_image(image.strip())
+            except llm.OllamaDown as e:
+                return self._send(503, {"error": str(e), "ollama": False})
+            except llm.GenerationError as e:
+                return self._send(502, {"error": str(e), "ollama": True})
+            return self._send(200, {"text": text, "model": model})
 
         if path == "/api/render":
             scope = body.get("scope")

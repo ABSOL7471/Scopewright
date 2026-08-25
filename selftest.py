@@ -192,9 +192,12 @@ check("retry prompt carries the validator's errors",
 # ----------------------------------------------------------------- server
 # Mock the llm layer: the server must be bootable and testable with
 # Ollama completely absent.
-llm.status = lambda: {"ollama": True, "model": "mock-model"}
+llm.status = lambda: {"ollama": True, "model": "mock-model",
+                      "vision_model": "mock-vl"}
 llm.generate_scope = lambda notes: (
     copy.deepcopy(GOOD), ["filled missing exclusions with []"], "mock-model")
+llm.transcribe_image = lambda b64: ("hall bath gut, reloc toilet ~2ft",
+                                    "mock-vl")
 
 srv = ThreadingHTTPServer(("127.0.0.1", 0), S.Handler)
 base = "http://127.0.0.1:%d" % srv.server_address[1]
@@ -225,7 +228,8 @@ check("UI has the Ollama-not-detected banner state",
 
 s, b, _ = req("/api/status")
 check("GET /api/status reports the mocked llm layer",
-      s == 200 and json.loads(b) == {"ollama": True, "model": "mock-model"})
+      s == 200 and json.loads(b) == {"ollama": True, "model": "mock-model",
+                                     "vision_model": "mock-vl"})
 
 s, b, _ = req("/api/generate", {"notes": "hall bath gut, reloc toilet"})
 d = json.loads(b)
@@ -276,9 +280,42 @@ check("render escapes model-authored HTML",
 
 s, b, _ = req("/api/render", {"scope": "not an object"})
 check("render rejects a non-object scope with 400", s == 400)
+
+# Photo transcription route (vision, mocked): text comes back for HUMAN
+# review in the notes box - the route never chains into generate.
+s, b, _ = req("/api/transcribe", {"image": "aGVsbG8="})
+d = json.loads(b)
+check("POST /api/transcribe returns text + vision model",
+      s == 200 and d["text"].startswith("hall bath gut")
+      and d["model"] == "mock-vl")
+s, b, _ = req("/api/transcribe", {"image": ""})
+check("transcribe rejects empty image with 400", s == 400)
+s, b, _ = req("/api/transcribe", {"image": "x" * (S.MAX_IMAGE_B64 + 1)})
+check("transcribe rejects oversized image with 400", s == 400)
+llm.transcribe_image = (lambda b64: (_ for _ in ()).throw(
+    llm.OllamaDown("No vision model installed.")))
+s, b, _ = req("/api/transcribe", {"image": "aGVsbG8="})
+check("transcribe surfaces OllamaDown as 503",
+      s == 503 and b"vision" in b.lower())
+
+s, ui_page, _ = req("/")
+check("UI has the photo button, capability-gated",
+      b'id="photoBtn"' in ui_page and b'id="photoFile"' in ui_page)
+
 s, b, _ = req("/api/nope")
 check("unknown route 404s", s == 404)
 srv.shutdown()
+
+# Vision model picker (pure function, offline)
+check("pick_vision_model finds an installed vision model",
+      llm.pick_vision_model(["qwen2.5-coder:7b", "qwen2.5vl:7b"])
+      == "qwen2.5vl:7b")
+check("pick_vision_model -> None when only chat models installed",
+      llm.pick_vision_model(["qwen2.5-coder:7b", "llama3.1:8b"]) is None)
+os.environ["SCOPEWRIGHT_VISION_MODEL"] = "my-vl:latest"
+check("SCOPEWRIGHT_VISION_MODEL env override wins",
+      llm.pick_vision_model(["qwen2.5vl:7b"]) == "my-vl:latest")
+del os.environ["SCOPEWRIGHT_VISION_MODEL"]
 
 # ----------------------------------------------------------- golden cases
 GOLDEN = os.path.join(HERE, "eval", "golden")

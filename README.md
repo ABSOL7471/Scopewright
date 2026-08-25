@@ -45,6 +45,17 @@ From the generated scope: **Download JSON** (the structured data) or
 **Open printable proposal** (a clean paper-look HTML document with
 signature lines, ready to print or PDF).
 
+### Photo of your notes
+
+With a local vision model installed (`ollama pull qwen2.5vl:7b`), a
+**📷 Photo of notes** button appears: snap your notepad, and the model
+transcribes it verbatim — abbreviations, question marks, and all — into
+the notes box. Deliberately human-in-the-loop: the transcription lands
+where **you review and fix it** before generating, because a misread
+word must become an edit, not a line item in a client document. Without
+a vision model the button simply doesn't exist (capability-gated, like
+everything else here). Override: `SCOPEWRIGHT_VISION_MODEL=...`.
+
 ## Architecture: the model proposes, the code validates
 
 The LLM never gets the last word.

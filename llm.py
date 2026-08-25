@@ -33,6 +33,18 @@ PREFERRED = ("qwen2.5-coder:7b", "qwen2.5-coder")
 CHAT_HINTS = ("qwen", "llama", "mistral", "gemma", "phi", "deepseek")
 NEVER = ("embed", "bge", "nomic", "minilm", "rerank")
 
+# Vision: only used for transcribing photos of notes. Capability-gated -
+# without one of these installed, the photo button simply doesn't appear.
+VISION_HINTS = ("qwen2.5vl", "qwen2-vl", "llava", "minicpm-v", "moondream",
+                "llama3.2-vision", "bakllava")
+
+TRANSCRIBE_PROMPT = (
+    "Transcribe the notes in this photo exactly as written - handwritten or "
+    "typed job-site notes. Keep the original line breaks, abbreviations, "
+    "misspellings, arrows, and question marks; expand nothing and add "
+    "nothing. If a word is unreadable, write [illegible] in its place. "
+    "Output only the transcription, no commentary.")
+
 
 class OllamaDown(Exception):
     """Ollama unreachable, or reachable with nothing usable installed."""
@@ -73,12 +85,27 @@ def pick_model(names):
     return usable[0] if usable else None
 
 
+def pick_vision_model(names):
+    """Pure function, like pick_model. None when no vision model installed."""
+    env = os.environ.get("SCOPEWRIGHT_VISION_MODEL")
+    if env:
+        return env
+    if not names:
+        return None
+    for hint in VISION_HINTS:
+        for n in names:
+            if n and hint in n.lower():
+                return n
+    return None
+
+
 def status():
     """For GET /api/status and the UI's capability gating."""
     names = list_models()
     if names is None:
-        return {"ollama": False, "model": None}
-    return {"ollama": True, "model": pick_model(names)}
+        return {"ollama": False, "model": None, "vision_model": None}
+    return {"ollama": True, "model": pick_model(names),
+            "vision_model": pick_vision_model(names)}
 
 
 def chat(model, messages, timeout=600):
@@ -159,6 +186,50 @@ def _outermost_object(text):
                     break
         start = text.find("{", start + 1)
     return None
+
+
+def transcribe_image(image_b64):
+    """Photo of notes -> verbatim text via a local vision model.
+    Returns (text, model_name). The transcription goes back to the HUMAN
+    for review in the notes box - it is never fed to generate_scope
+    blind, because a misread word must become an edit, not a line item."""
+    names = list_models()
+    if names is None:
+        raise OllamaDown(
+            "Ollama not detected at %s. Start it and try again." % OLLAMA)
+    model = pick_vision_model(names)
+    if not model:
+        raise OllamaDown(
+            "No vision model installed. Try: ollama pull qwen2.5vl:7b")
+    payload = json.dumps({
+        "model": model,
+        "messages": [{"role": "user", "content": TRANSCRIBE_PROMPT,
+                      "images": [image_b64]}],
+        "stream": False,
+        "options": {"temperature": 0},
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        OLLAMA + "/api/chat", data=payload,
+        headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=600) as r:
+            data = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        detail = ""
+        try:
+            detail = e.read().decode("utf-8", "replace")[:300]
+        except Exception:
+            pass
+        raise OllamaDown("Ollama returned HTTP %d for vision model %r. %s"
+                         % (e.code, model, detail))
+    except Exception as e:
+        raise OllamaDown("Could not reach Ollama at %s (%s)." % (OLLAMA, e))
+    text = ((data.get("message") or {}).get("content", "") or "").strip()
+    if not text:
+        raise GenerationError(
+            "The vision model (%s) returned an empty transcription. "
+            "Try a sharper, better-lit photo." % model)
+    return text, model
 
 
 def generate_scope(notes):
