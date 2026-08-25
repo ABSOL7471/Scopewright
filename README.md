@@ -100,9 +100,20 @@ only if the model hallucinated. `eval/eval_harness.py` runs them against
 live Ollama and scores validity, coverage, invention rate, and whether
 unknowns landed in open questions.
 
-**Results pending — harness included.** The golden cases are AI-drafted and
-marked as such; they're being replaced case-by-case with real examples from
-a working GC before the numbers mean anything.
+**First measured results** (Aug 2026, both models, full analysis in
+[eval/EVAL.md](eval/EVAL.md)):
+
+| metric | qwen2.5-coder:7b | qwen2.5:14b |
+|---|---|---|
+| valid JSON | 100% | 100% |
+| expected elements covered | 93% | **96%** |
+| **invented items (hallucinations)** | **0%** | **0%** |
+| avg seconds per scope | **15.6** | 25.1 |
+
+Zero hallucinated line items on both models — the schema/validator
+architecture, not model size, carries that number. The golden cases are
+still AI-drafted and marked as such; they're being replaced case-by-case
+with real examples from a working GC, and the numbers get re-run then.
 
 ## What this does not do
 

@@ -1,0 +1,271 @@
+{
+  "summary": {
+    "model": "qwen2.5-coder:7b",
+    "cases": 12,
+    "json_valid_rate": 1.0,
+    "element_coverage": 0.9277777777777777,
+    "exclusion_coverage": 0.16666666666666666,
+    "invention_rate": 0.0,
+    "oq_honesty": 0.6111111111111112,
+    "generated_at": "2026-08-24 20:46:10"
+  },
+  "cases": [
+    {
+      "case": "basement-finish",
+      "seconds": 21.9,
+      "json_valid": true,
+      "element_coverage": 1.0,
+      "exclusion_coverage": 0.0,
+      "invention_rate": 0.0,
+      "oq_honesty": 1.0,
+      "missing_elements": [],
+      "missing_exclusions": [
+        "wet bar",
+        "waterproof"
+      ],
+      "inventions_found": [],
+      "missing_open_questions": [],
+      "error": null,
+      "model": "qwen2.5-coder:7b",
+      "repairs": []
+    },
+    {
+      "case": "bathroom-gut",
+      "seconds": 19.3,
+      "json_valid": true,
+      "element_coverage": 1.0,
+      "exclusion_coverage": 0.5,
+      "invention_rate": 0.0,
+      "oq_honesty": 0.3333333333333333,
+      "missing_elements": [],
+      "missing_exclusions": [
+        "supply"
+      ],
+      "inventions_found": [],
+      "missing_open_questions": [
+        "joist",
+        "subfloor"
+      ],
+      "error": null,
+      "model": "qwen2.5-coder:7b",
+      "repairs": []
+    },
+    {
+      "case": "deck-build",
+      "seconds": 15.2,
+      "json_valid": true,
+      "element_coverage": 1.0,
+      "exclusion_coverage": 0.0,
+      "invention_rate": 0.0,
+      "oq_honesty": 0.0,
+      "missing_elements": [],
+      "missing_exclusions": [
+        "rot",
+        "landscap"
+      ],
+      "inventions_found": [],
+      "missing_open_questions": [
+        "dimensions",
+        "decking",
+        "frost"
+      ],
+      "error": null,
+      "model": "qwen2.5-coder:7b",
+      "repairs": []
+    },
+    {
+      "case": "exterior-paint",
+      "seconds": 14.4,
+      "json_valid": true,
+      "element_coverage": 1.0,
+      "exclusion_coverage": 0.0,
+      "invention_rate": 0.0,
+      "oq_honesty": 0.6666666666666666,
+      "missing_elements": [],
+      "missing_exclusions": [
+        "surface defects",
+        "rot"
+      ],
+      "inventions_found": [],
+      "missing_open_questions": [
+        "garage door"
+      ],
+      "error": null,
+      "model": "qwen2.5-coder:7b",
+      "repairs": [
+        "coerced numeric item fields to strings"
+      ]
+    },
+    {
+      "case": "fence",
+      "seconds": 14.7,
+      "json_valid": true,
+      "element_coverage": 0.8,
+      "exclusion_coverage": 0.0,
+      "invention_rate": 0.0,
+      "oq_honesty": 0.3333333333333333,
+      "missing_elements": [
+        "811"
+      ],
+      "missing_exclusions": [
+        "survey",
+        "landscap"
+      ],
+      "inventions_found": [],
+      "missing_open_questions": [
+        "measure",
+        "survey"
+      ],
+      "error": null,
+      "model": "qwen2.5-coder:7b",
+      "repairs": []
+    },
+    {
+      "case": "flooring-replacement",
+      "seconds": 13.3,
+      "json_valid": true,
+      "element_coverage": 1.0,
+      "exclusion_coverage": 0.0,
+      "invention_rate": 0.0,
+      "oq_honesty": 1.0,
+      "missing_elements": [],
+      "missing_exclusions": [
+        "piano",
+        "kitchen"
+      ],
+      "inventions_found": [],
+      "missing_open_questions": [],
+      "error": null,
+      "model": "qwen2.5-coder:7b",
+      "repairs": []
+    },
+    {
+      "case": "garage-conversion",
+      "seconds": 14.4,
+      "json_valid": true,
+      "element_coverage": 1.0,
+      "exclusion_coverage": 0.0,
+      "invention_rate": 0.0,
+      "oq_honesty": 0.3333333333333333,
+      "missing_elements": [],
+      "missing_exclusions": [
+        "panel",
+        "upgrade"
+      ],
+      "inventions_found": [],
+      "missing_open_questions": [
+        "panel",
+        "egress"
+      ],
+      "error": null,
+      "model": "qwen2.5-coder:7b",
+      "repairs": []
+    },
+    {
+      "case": "kitchen-refresh",
+      "seconds": 14.0,
+      "json_valid": true,
+      "element_coverage": 0.8333333333333334,
+      "exclusion_coverage": 0.5,
+      "invention_rate": 0.0,
+      "oq_honesty": 1.0,
+      "missing_elements": [
+        "backsplash"
+      ],
+      "missing_exclusions": [
+        "appliance"
+      ],
+      "inventions_found": [],
+      "missing_open_questions": [],
+      "error": null,
+      "model": "qwen2.5-coder:7b",
+      "repairs": []
+    },
+    {
+      "case": "punch-list",
+      "seconds": 16.4,
+      "json_valid": true,
+      "element_coverage": 1.0,
+      "exclusion_coverage": 0.0,
+      "invention_rate": 0.0,
+      "oq_honesty": 1.0,
+      "missing_elements": [],
+      "missing_exclusions": [
+        "repaint",
+        "panel"
+      ],
+      "inventions_found": [],
+      "missing_open_questions": [],
+      "error": null,
+      "model": "qwen2.5-coder:7b",
+      "repairs": []
+    },
+    {
+      "case": "small-addition",
+      "seconds": 21.0,
+      "json_valid": true,
+      "element_coverage": 0.6666666666666666,
+      "exclusion_coverage": 1.0,
+      "invention_rate": 0.0,
+      "oq_honesty": 0.5,
+      "missing_elements": [
+        "crawl",
+        "siding"
+      ],
+      "missing_exclusions": [],
+      "inventions_found": [],
+      "missing_open_questions": [
+        "survey",
+        "siding"
+      ],
+      "error": null,
+      "model": "qwen2.5-coder:7b",
+      "repairs": []
+    },
+    {
+      "case": "water-damage",
+      "seconds": 11.5,
+      "json_valid": true,
+      "element_coverage": 1.0,
+      "exclusion_coverage": 0.0,
+      "invention_rate": 0.0,
+      "oq_honesty": 0.5,
+      "missing_elements": [],
+      "missing_exclusions": [
+        "plumbing",
+        "mold",
+        "refinish"
+      ],
+      "inventions_found": [],
+      "missing_open_questions": [
+        "staining"
+      ],
+      "error": null,
+      "model": "qwen2.5-coder:7b",
+      "repairs": []
+    },
+    {
+      "case": "window-replacement",
+      "seconds": 11.5,
+      "json_valid": true,
+      "element_coverage": 0.8333333333333334,
+      "exclusion_coverage": 0.0,
+      "invention_rate": 0.0,
+      "oq_honesty": 0.6666666666666666,
+      "missing_elements": [
+        "insert"
+      ],
+      "missing_exclusions": [
+        "rot",
+        "window treatment"
+      ],
+      "inventions_found": [],
+      "missing_open_questions": [
+        "grid"
+      ],
+      "error": null,
+      "model": "qwen2.5-coder:7b",
+      "repairs": []
+    }
+  ]
+}
