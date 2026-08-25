@@ -20,6 +20,11 @@ import prompt
 import schema
 import scopewright_server as S
 
+# Point llm at a settings file that cannot exist BEFORE any pick_model
+# checks run - the user's real settings.json must never steer tests.
+llm.SETTINGS_PATH = os.path.join(
+    tempfile.mkdtemp(prefix="scopewright-selftest-settings-"), "settings.json")
+
 fails = []
 total = [0]
 
@@ -327,8 +332,29 @@ def req2(path, method, payload=None):
 _tmp_parent = tempfile.mkdtemp(prefix="scopewright-selftest-")
 S.SCOPES_DIR = os.path.join(_tmp_parent, "scopes")
 S.COMPANY_PATH = os.path.join(_tmp_parent, "company.json")
+# (llm.SETTINGS_PATH already isolated in its own temp dir at import time -
+# keeping it out of _tmp_parent so the nothing-escaped listing stays clean.)
 os.makedirs(S.SCOPES_DIR)
 _parent_before = sorted(os.listdir(_tmp_parent))
+
+# Settings (hamburger menu) - GET/POST against the temp SETTINGS_PATH only.
+s, b, _ = req("/api/settings")
+check("GET /api/settings starts empty (auto everything)",
+      s == 200 and json.loads(b) == {})
+s, b, _ = req("/api/settings", {"model": " qwen2.5:14b ", "vision_model": "",
+                                "junk": "dropped"})
+check("POST /api/settings keeps known keys, trims, drops empties+unknowns",
+      s == 200 and json.loads(b) == {"model": "qwen2.5:14b"})
+check("saved settings steer pick_model (env unset)",
+      llm.pick_model(["qwen2.5-coder:7b", "qwen2.5:14b"]) == "qwen2.5:14b")
+os.environ["SCOPEWRIGHT_MODEL"] = "env-wins:latest"
+check("env var still beats saved settings",
+      llm.pick_model(["qwen2.5:14b"]) == "env-wins:latest")
+del os.environ["SCOPEWRIGHT_MODEL"]
+s, b, _ = req("/api/settings", {"model": "", "vision_model": ""})
+check("clearing settings returns to auto",
+      json.loads(b) == {} and
+      llm.pick_model(["qwen2.5-coder:7b"]) == "qwen2.5-coder:7b")
 
 s, b, _ = req("/api/scopes", {"scope": GOOD, "model": "mock-model"})
 d = json.loads(b)
@@ -415,6 +441,13 @@ check("UI has the letterhead form and save button",
 check("UI letterhead page says details stay local",
       "never leave this computer" in ui_text
       and "company.json" in ui_text)
+check("UI has the settings hamburger menu",
+      'id="menuBtn"' in ui_text and 'id="menu"' in ui_text
+      and 'id="setModel"' in ui_text and 'id="setVision"' in ui_text
+      and 'id="setSave"' in ui_text)
+check("hamburger closes on outside click and Escape",
+      'addEventListener("click", () => toggleMenu(false))' in ui_text
+      and '"Escape"' in ui_text)
 check("UI has the Save scope button",
       'id="save"' in ui_text)
 

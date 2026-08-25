@@ -42,6 +42,27 @@
   .status.up .dot { background: var(--good); }
   .status.down .dot { background: var(--bad); }
 
+  /* ----------------------------------------------------- hamburger menu */
+  .menuWrap { position: relative; }
+  #menuBtn { padding: 8px 11px; line-height: 0; color: var(--muted); }
+  #menuBtn:hover:not(:disabled) { color: var(--text); }
+  #menuBtn[aria-expanded="true"] { background: var(--accent-soft);
+                                   color: var(--text); }
+  .menu { display: none; position: absolute; right: 0; top: calc(100% + 8px);
+          width: 300px; z-index: 40; padding: 18px;
+          box-shadow: 0 6px 22px rgba(0,0,0,.10); }
+  .menu.open { display: block; }
+  .menuTitle { font-family: var(--serif); font-size: 16px;
+               margin-bottom: 14px; }
+  .menu label { margin: 12px 0 6px; }
+  .menu select { width: 100%; background: var(--bg); color: var(--text);
+                 border: 1px solid var(--border2); border-radius: 9px;
+                 padding: 8px 10px; font-family: var(--sans); font-size: 13px; }
+  .menu select:focus { outline: none; border-color: var(--accent); }
+  .menuHint { font-size: 11.5px; color: var(--faint); line-height: 1.5;
+              margin-top: 12px; }
+  #setNote { font-size: 12px; color: var(--good); }
+
   /* ------------------------------------------------------- cards, banner */
   .card { background: var(--card); border: 1px solid var(--border);
           border-radius: var(--r); padding: 20px;
@@ -196,6 +217,29 @@
       <a href="#letterhead" data-page="letterhead">Letterhead</a>
     </nav>
     <div class="status" id="status"><span class="dot"></span>checking Ollama…</div>
+    <div class="menuWrap">
+      <button class="ghost" id="menuBtn" aria-label="Settings menu"
+              aria-expanded="false">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+             stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M2 4h12M2 8h12M2 12h12"/>
+        </svg>
+      </button>
+      <div class="menu card" id="menu">
+        <div class="menuTitle">Settings</div>
+        <label for="setModel">Scope model</label>
+        <select id="setModel"><option value="">Auto</option></select>
+        <label for="setVision">Vision model (photo of notes)</label>
+        <select id="setVision"><option value="">Auto</option></select>
+        <div class="row" style="margin-top:14px">
+          <button id="setSave">Save settings</button>
+          <span id="setNote"></span>
+        </div>
+        <p class="menuHint">Auto picks the best installed model. Choices are
+        whatever Ollama has installed on this machine. Stored locally in
+        settings.json (gitignored).</p>
+      </div>
+    </div>
   </header>
 
   <div id="banner">
@@ -320,6 +364,7 @@ async function checkStatus() {
       $("go").disabled = !d.model;
       // Capability gate: the photo button exists only when a vision model does.
       $("photoBtn").style.display = d.vision_model ? "" : "none";
+      fillModelPickers(d.models || []);
       return;
     }
   } catch (e) { /* server itself down; fall through */ }
@@ -329,6 +374,60 @@ async function checkStatus() {
   $("banner").style.display = "block";
   $("go").disabled = true;
 }
+
+/* -------------------------------------------------- settings hamburger */
+async function fillModelPickers(models) {
+  let saved = {};
+  try { saved = await (await fetch("/api/settings")).json(); } catch (e) {}
+  for (const [id, key] of [["setModel", "model"],
+                           ["setVision", "vision_model"]]) {
+    const sel = $(id);
+    sel.replaceChildren(el("option", null, "Auto"));
+    sel.firstChild.value = "";
+    models.forEach(m => {
+      const o = el("option", null, m);
+      o.value = m;
+      sel.append(o);
+    });
+    sel.value = models.includes(saved[key]) ? saved[key] : "";
+  }
+}
+
+function toggleMenu(open) {
+  const want = open !== undefined ? open
+             : !$("menu").classList.contains("open");
+  $("menu").classList.toggle("open", want);
+  $("menuBtn").setAttribute("aria-expanded", String(want));
+}
+
+$("menuBtn").addEventListener("click", e => {
+  e.stopPropagation();
+  toggleMenu();
+});
+$("menu").addEventListener("click", e => e.stopPropagation());
+document.addEventListener("click", () => toggleMenu(false));
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") toggleMenu(false);
+});
+
+$("setSave").addEventListener("click", async () => {
+  $("setSave").disabled = true;
+  try {
+    const r = await fetch("/api/settings", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({model: $("setModel").value,
+                            vision_model: $("setVision").value})
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    $("setNote").textContent = "Saved";
+    setTimeout(() => { $("setNote").textContent = ""; }, 2500);
+    checkStatus();  // pill + gates reflect the new picks immediately
+  } catch (e) {
+    $("setNote").textContent = "Save failed: " + e.message;
+  } finally {
+    $("setSave").disabled = false;
+  }
+});
 
 /* ------------------------------------------------------ scope preview */
 function renderScope(s) {

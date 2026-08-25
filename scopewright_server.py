@@ -19,6 +19,8 @@ Routes:
     DELETE /api/scopes/<id>   {deleted: true}
     GET  /api/company   letterhead details from company.json (or {})
     POST /api/company   save letterhead details (5 known keys only)
+    GET  /api/settings  model overrides from settings.json (or {})
+    POST /api/settings  save model overrides (model, vision_model)
 
 The render layer is deliberately model-free: the proposal a client receives
 is assembled by code from validated JSON, with every string HTML-escaped.
@@ -50,6 +52,10 @@ SCOPES_DIR = os.path.join(HERE, "scopes")
 COMPANY_PATH = os.path.join(HERE, "company.json")
 
 COMPANY_KEYS = ("name", "license", "phone", "email", "location")
+
+# Hamburger-menu settings: model overrides only. An absent key means
+# "auto-pick". Stored via llm.SETTINGS_PATH so llm's pickers see them.
+SETTINGS_KEYS = ("model", "vision_model")
 
 # Saved-scope ids are slug + timestamp, and the GET/DELETE routes accept
 # ONLY this shape - the id becomes a filename, so anything else (dots,
@@ -332,6 +338,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(404, {"error": "no such scope"})
         if path == "/api/company":
             return self._send(200, load_company())
+        if path == "/api/settings":
+            return self._send(200, llm.load_settings())
         return self._send(404, {"error": "no such route"})
 
     def do_DELETE(self):
@@ -413,6 +421,20 @@ class Handler(BaseHTTPRequestHandler):
                 if v:
                     saved[key] = v
             _write_json_atomic(COMPANY_PATH, saved)
+            return self._send(200, saved)
+
+        if path == "/api/settings":
+            if not isinstance(body, dict):
+                return self._send(400, {"error": "body must be an object"})
+            saved = {}
+            for key in SETTINGS_KEYS:
+                v = body.get(key)
+                if v is None:
+                    continue
+                v = str(v).strip()
+                if v:  # empty string = back to auto; simply not saved
+                    saved[key] = v
+            _write_json_atomic(llm.SETTINGS_PATH, saved)
             return self._send(200, saved)
 
         return self._send(404, {"error": "no such route"})

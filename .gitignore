@@ -3,3 +3,4 @@ __pycache__/
 eval/results.json
 company.json
 scopes/
+settings.json

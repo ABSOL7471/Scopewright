@@ -66,11 +66,31 @@ def list_models(timeout=3):
         return None
 
 
-def pick_model(names):
+# Settings chosen in the app's hamburger menu (model overrides) persist
+# here. Priority everywhere: env var > saved setting > auto-pick.
+SETTINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "settings.json")
+
+
+def load_settings():
+    """Contents of settings.json, or {} - absent/corrupt is just 'auto'."""
+    try:
+        with open(SETTINGS_PATH, encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def pick_model(names, settings=None):
     """Pure function so the preference order is testable offline."""
     env = os.environ.get("SCOPEWRIGHT_MODEL")
     if env:
         return env
+    settings = load_settings() if settings is None else settings
+    saved = settings.get("model")
+    if isinstance(saved, str) and saved.strip():
+        return saved.strip()
     if not names:
         return None
     usable = [n for n in names
@@ -85,11 +105,15 @@ def pick_model(names):
     return usable[0] if usable else None
 
 
-def pick_vision_model(names):
+def pick_vision_model(names, settings=None):
     """Pure function, like pick_model. None when no vision model installed."""
     env = os.environ.get("SCOPEWRIGHT_VISION_MODEL")
     if env:
         return env
+    settings = load_settings() if settings is None else settings
+    saved = settings.get("vision_model")
+    if isinstance(saved, str) and saved.strip():
+        return saved.strip()
     if not names:
         return None
     for hint in VISION_HINTS:
@@ -100,12 +124,17 @@ def pick_vision_model(names):
 
 
 def status():
-    """For GET /api/status and the UI's capability gating."""
+    """For GET /api/status and the UI's capability gating. `models` feeds
+    the settings menu's pickers; embedding models are filtered out."""
     names = list_models()
     if names is None:
-        return {"ollama": False, "model": None, "vision_model": None}
+        return {"ollama": False, "model": None, "vision_model": None,
+                "models": []}
+    choosable = [n for n in names
+                 if n and not any(b in n.lower() for b in NEVER)]
     return {"ollama": True, "model": pick_model(names),
-            "vision_model": pick_vision_model(names)}
+            "vision_model": pick_vision_model(names),
+            "models": choosable}
 
 
 def chat(model, messages, timeout=600):
