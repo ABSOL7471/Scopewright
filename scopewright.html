@@ -5,121 +5,212 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Scopewright</title>
 <style>
-  :root {
-    --bg: #1c1a17; --panel: #26231f; --line: #3a352e;
-    --ink: #e8e2d6; --dim: #9b9284; --accent: #c9a35e;
-    --paper: #fdfcf9; --paper-ink: #26221c; --paper-dim: #6b6357;
-    --paper-line: #d8d2c6;
-  }
+  :root{ --bg:#faf9f5; --side:#f4f1ea; --card:#ffffff; --border:#e9e4d9;
+    --border2:#d9d2c2; --text:#232019; --muted:#75705f; --faint:#a8a290;
+    --accent:#b98d4f; --accent-soft:#f7f0e2; --good:#4b8a6a;
+    --good-soft:#ebf3ee; --warn:#a8842f; --warn-soft:#f9f2df;
+    --bad:#b25a52; --bad-soft:#f8edec; --pill:#26231c;
+    --mono:'Cascadia Code','Consolas',monospace;
+    --sans:'Segoe UI',system-ui,sans-serif;
+    --serif:'Georgia','Times New Roman',serif; --r:14px; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: var(--bg); color: var(--ink); min-height: 100vh;
-         font-family: Georgia, 'Times New Roman', serif; }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 60px; }
+  body { background: var(--bg); color: var(--text); min-height: 100vh;
+         font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; }
 
-  header.app { display: flex; align-items: baseline; gap: 14px;
-               margin-bottom: 6px; }
-  header.app h1 { font-size: 26px; font-weight: normal; letter-spacing: .01em; }
-  header.app h1 b { color: var(--accent); font-weight: normal; }
-  .tag { font-family: Arial, Helvetica, sans-serif; font-size: 12px;
-         color: var(--dim); }
-  .status { font-family: Arial, Helvetica, sans-serif; font-size: 11px;
-            color: var(--dim); margin-bottom: 20px; }
-  .status .dot { display: inline-block; width: 8px; height: 8px;
-                 border-radius: 50%; background: #666; margin-right: 5px;
-                 vertical-align: baseline; }
-  .status.up .dot { background: #6fae6f; }
+  /* ------------------------------------------------------------ header */
+  .topbar { display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+            padding-bottom: 16px; border-bottom: 1px solid var(--border);
+            margin-bottom: 22px; }
+  .brand { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .brand h1 { font-family: var(--serif); font-size: 24px;
+              font-weight: normal; letter-spacing: .01em; }
+  .brand h1 b { color: var(--accent); font-weight: normal; }
+  .tag { font-size: 12px; color: var(--muted); }
+  nav.tabs { display: flex; gap: 4px; margin-left: auto; }
+  nav.tabs a { display: inline-block; padding: 7px 14px; border-radius: 9px;
+               color: var(--muted); text-decoration: none; font-size: 13px;
+               border: 1px solid transparent; transition: all .15s; }
+  nav.tabs a:hover { color: var(--text); background: var(--side); }
+  nav.tabs a.active { color: var(--text); background: var(--accent-soft);
+                      border-color: var(--border2); }
+  .status { display: inline-flex; align-items: center; gap: 7px;
+            background: var(--pill); color: #f4f1ea; font-size: 11.5px;
+            padding: 6px 13px; border-radius: 999px; white-space: nowrap; }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%;
+                 background: var(--faint); flex: none; }
+  .status.up .dot { background: var(--good); }
+  .status.down .dot { background: var(--bad); }
 
-  #banner { display: none; background: #3a2f22; border: 1px solid #6b5432;
-            border-radius: 6px; padding: 14px 18px; margin-bottom: 18px;
-            font-family: Arial, Helvetica, sans-serif; font-size: 13px;
-            line-height: 1.5; }
-  #banner b { color: var(--accent); }
-  #banner code { background: #262019; padding: 1px 6px; border-radius: 3px;
-                 font-size: 12px; }
+  /* ------------------------------------------------------- cards, banner */
+  .card { background: var(--card); border: 1px solid var(--border);
+          border-radius: var(--r); padding: 20px;
+          box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  #banner { display: none; background: var(--warn-soft);
+            border: 1px solid var(--border2); border-radius: var(--r);
+            padding: 14px 18px; margin-bottom: 18px; font-size: 13px;
+            line-height: 1.55; }
+  #banner b { color: var(--warn); }
+  #banner code { font-family: var(--mono); font-size: 12px;
+                 background: var(--card); border: 1px solid var(--border);
+                 padding: 1px 6px; border-radius: 5px; }
+  #banner a { color: var(--accent); }
 
+  /* ------------------------------------------------------------ buttons */
+  button { font-family: var(--sans); font-size: 13.5px; font-weight: 600;
+           padding: 9px 20px; border-radius: 9px; cursor: pointer;
+           border: 1px solid var(--accent); background: var(--accent);
+           color: #fff; transition: all .15s; }
+  button:hover:not(:disabled) { filter: brightness(1.06); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.ghost { background: transparent; color: var(--accent); }
+  button.ghost:hover:not(:disabled) { background: var(--accent-soft);
+                                      filter: none; }
+  button.danger { background: transparent; border-color: var(--border2);
+                  color: var(--muted); font-weight: 400; padding: 6px 13px; }
+  button.danger:hover:not(:disabled) { border-color: var(--bad);
+                                       color: var(--bad); filter: none; }
+  button.danger.armed { background: var(--bad-soft); border-color: var(--bad);
+                        color: var(--bad); font-weight: 600; }
+
+  /* --------------------------------------------------------- write page */
   .cols { display: grid; grid-template-columns: minmax(320px, 5fr)
           minmax(380px, 7fr); gap: 22px; align-items: start; }
   @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
-
-  .panel { background: var(--panel); border: 1px solid var(--line);
-           border-radius: 8px; padding: 18px; }
-  label { display: block; font-family: Arial, Helvetica, sans-serif;
-          font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
-          color: var(--dim); margin-bottom: 10px; }
+  label { display: block; font-size: 11px; letter-spacing: .14em;
+          text-transform: uppercase; color: var(--muted);
+          margin-bottom: 10px; }
   textarea { width: 100%; min-height: 380px; resize: vertical;
-             background: #1f1d19; color: var(--ink); border: 1px solid
-             var(--line); border-radius: 6px; padding: 14px;
-             font: 14px/1.6 Consolas, Menlo, monospace; }
+             background: var(--bg); color: var(--text);
+             border: 1px solid var(--border2); border-radius: 9px;
+             padding: 14px; font: 14px/1.6 var(--serif);
+             transition: border-color .15s; }
+  textarea::placeholder { color: var(--faint); font-style: italic; }
   textarea:focus { outline: none; border-color: var(--accent); }
-
-  .row { display: flex; align-items: center; gap: 14px; margin-top: 14px;
+  .row { display: flex; align-items: center; gap: 12px; margin-top: 14px;
          flex-wrap: wrap; }
-  button { font-family: Arial, Helvetica, sans-serif; font-size: 14px;
-           padding: 10px 22px; border-radius: 6px; border: 1px solid
-           var(--accent); background: var(--accent); color: #221c12;
-           cursor: pointer; }
-  button:hover:not(:disabled) { filter: brightness(1.08); }
-  button:disabled { opacity: .45; cursor: default; }
-  button.ghost { background: transparent; color: var(--accent); }
-  #spin { display: none; font-family: Arial, Helvetica, sans-serif;
-          font-size: 12px; color: var(--dim); }
+  #spin { display: none; font-size: 12px; color: var(--muted); }
   #spin.on { display: inline; }
-  #err { display: none; margin-top: 12px; color: #e2a1a1; font-family:
-         Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.5; }
-  #repairs { display: none; margin-top: 12px; font-family: Arial, Helvetica,
-             sans-serif; font-size: 12px; color: var(--dim); line-height: 1.5; }
+  #photoSpin { font-size: 12px; color: var(--muted); }
+  #err { display: none; margin-top: 14px; background: var(--bad-soft);
+         border: 1px solid var(--border2); border-radius: 9px;
+         padding: 11px 14px; color: var(--bad); font-size: 13px;
+         line-height: 1.5; }
+  #repairs { display: none; margin-top: 14px; background: var(--warn-soft);
+             border: 1px solid var(--border2); border-radius: 9px;
+             padding: 11px 14px; color: var(--warn); font-size: 12.5px;
+             line-height: 1.5; }
+  #saveNote { display: none; font-size: 12px; color: var(--good); }
 
   /* the scope preview reads like the paper document it will become */
   #scopePanel { display: none; }
-  .paper { background: var(--paper); color: var(--paper-ink);
-           border-radius: 6px; padding: 34px 36px;
-           box-shadow: 0 2px 14px rgba(0,0,0,.35); }
-  .paper .kicker { font-family: Arial, Helvetica, sans-serif; font-size: 10px;
+  .paper { background: var(--card); color: var(--text);
+           font-family: var(--serif); border: 1px solid var(--border);
+           border-radius: 9px; padding: 38px 42px;
+           box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .paper .kicker { font-family: var(--sans); font-size: 10px;
                    letter-spacing: .22em; text-transform: uppercase;
-                   color: #8a7d66; }
+                   color: var(--faint); }
   .paper h2.title { font-size: 23px; font-weight: normal; margin: 4px 0 2px;
-                    border-bottom: 3px double #8a7d66; padding-bottom: 10px; }
-  .paper .summary { font-style: italic; color: #3d382f; margin: 14px 0 6px;
-                    font-size: 14.5px; line-height: 1.5; }
-  .paper h3 { font-family: Arial, Helvetica, sans-serif; font-size: 11px;
+                    border-bottom: 3px double var(--border2);
+                    padding-bottom: 10px; }
+  .paper .summary { font-style: italic; color: var(--muted);
+                    margin: 14px 0 6px; font-size: 14.5px;
+                    line-height: 1.55; }
+  .paper h3 { font-family: var(--sans); font-size: 11px;
               letter-spacing: .14em; text-transform: uppercase;
-              color: var(--paper-dim); border-bottom: 1px solid
-              var(--paper-line); padding-bottom: 4px; margin: 22px 0 8px; }
-  .paper h4 { font-size: 14.5px; margin: 12px 0 4px; }
+              color: var(--muted); border-bottom: 1px solid var(--border);
+              padding-bottom: 4px; margin: 22px 0 8px; font-weight: 600; }
+  .paper h4 { font-size: 14.5px; margin: 12px 0 4px; font-weight: normal;
+              font-style: italic; }
   .paper table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .paper td { padding: 4px 8px 4px 0; border-top: 1px solid #eee9df;
+  .paper td { padding: 4px 8px 4px 0; border-top: 1px solid var(--border);
               vertical-align: top; line-height: 1.45; }
-  .paper td.qty { white-space: nowrap; color: #4b4437; width: 84px; }
-  .paper td.nt { color: var(--paper-dim); font-style: italic; width: 30%; }
-  .paper ul { margin: 4px 0 0 18px; font-size: 13px; line-height: 1.5; }
+  .paper td.qty { white-space: nowrap; color: var(--muted); width: 84px; }
+  .paper td.nt { color: var(--muted); font-style: italic; width: 30%; }
+  .paper ul { margin: 4px 0 0 18px; font-size: 13px; line-height: 1.55; }
   .paper li { margin-bottom: 3px; }
-  .paper .an { color: var(--paper-dim); font-style: italic; }
-  .paper .oq { background: #f6f2e8; border: 1px solid #e2d9c4;
-               padding: 10px 14px; margin-top: 8px; }
-  .paper .oq p { font-family: Arial, Helvetica, sans-serif; font-size: 10.5px;
-                 color: #7d6f52; margin-bottom: 5px; }
-  .paper .terms { font-size: 12.5px; line-height: 1.5; }
+  .paper .an { color: var(--muted); font-style: italic; }
+  .paper .oq { background: var(--accent-soft); border: 1px solid
+               var(--border2); border-radius: 6px; padding: 10px 14px;
+               margin-top: 8px; }
+  .paper .oq p { font-family: var(--sans); font-size: 10.5px;
+                 color: var(--warn); margin-bottom: 5px; }
+  .paper .terms { font-size: 12.5px; line-height: 1.55; }
+
+  /* --------------------------------------------------------- saved page */
+  .saved-grid { display: grid; gap: 14px;
+                grid-template-columns: repeat(auto-fill,
+                                              minmax(260px, 1fr)); }
+  .scope-card { cursor: pointer; transition: border-color .15s; }
+  .scope-card:hover { border-color: var(--accent); }
+  .scope-card h3 { font-family: var(--serif); font-size: 17px;
+                   font-weight: normal; margin-bottom: 6px; }
+  .scope-card .meta { font-size: 12px; color: var(--muted);
+                      margin-bottom: 12px; line-height: 1.6; }
+  .scope-card .meta .m { font-family: var(--mono); font-size: 11px;
+                         color: var(--faint); }
+  .empty { color: var(--muted); font-size: 14px; text-align: center;
+           padding: 44px 20px; font-family: var(--serif);
+           font-style: italic; }
+
+  /* ---------------------------------------------------- letterhead page */
+  .lh-cols { display: grid; grid-template-columns: minmax(300px, 5fr)
+             minmax(320px, 6fr); gap: 22px; align-items: start; }
+  @media (max-width: 900px) { .lh-cols { grid-template-columns: 1fr; } }
+  .field { margin-bottom: 14px; }
+  .field input { width: 100%; background: var(--bg); color: var(--text);
+                 border: 1px solid var(--border2); border-radius: 9px;
+                 padding: 9px 12px; font: 14px var(--sans);
+                 transition: border-color .15s; }
+  .field input:focus { outline: none; border-color: var(--accent); }
+  .hint { font-size: 12px; color: var(--muted); line-height: 1.55;
+          margin-top: 14px; }
+  #lhStatus { display: none; font-size: 12px; color: var(--good); }
+  .lh-preview { font-family: var(--serif); border-bottom: 3px double
+                var(--border2); padding-bottom: 14px; }
+  .lh-preview .co { font-size: 15px; letter-spacing: .02em; }
+  .lh-preview .co-meta { color: var(--muted); font-size: 11.5px;
+                         margin-top: 2px; }
+  .lh-preview .kicker { font-family: var(--sans); font-size: 10px;
+                        letter-spacing: .22em; text-transform: uppercase;
+                        color: var(--faint); margin-top: 12px; }
+  .lh-preview .ph { color: var(--faint); font-style: italic; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+  h2.pagehead { font-family: var(--serif); font-size: 19px;
+                font-weight: normal; margin-bottom: 14px; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="app">
-    <h1>Scope<b>wright</b></h1>
-    <span class="tag">job-walk notes in, client-ready scope out — all local</span>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Scope<b>wright</b></h1>
+      <span class="tag">job-walk notes in, client-ready scope out — all local</span>
+    </div>
+    <nav class="tabs" id="tabs">
+      <a href="#write" data-page="write">Write Scope</a>
+      <a href="#saved" data-page="saved">Saved Scopes</a>
+      <a href="#letterhead" data-page="letterhead">Letterhead</a>
+    </nav>
+    <div class="status" id="status"><span class="dot"></span>checking Ollama…</div>
   </header>
-  <div class="status" id="status"><span class="dot"></span>checking Ollama…</div>
 
   <div id="banner">
     <b>Ollama not detected.</b> Scopewright runs entirely on your machine and
     needs Ollama for the model. Start it (the desktop app, or
     <code>ollama serve</code>), make sure a chat model is installed
     (<code>ollama pull qwen2.5-coder:7b</code>), then
-    <a href="#" id="recheck" style="color:var(--accent)">check again</a>.
+    <a href="#" id="recheck">check again</a>.
     Nothing you paste here leaves this computer.
   </div>
 
+  <!-- ======================================================= WRITE PAGE -->
+  <section class="page" id="page-write">
   <div class="cols">
-    <div class="panel">
+    <div class="card">
       <label for="notes">Paste your job-walk notes</label>
       <textarea id="notes" placeholder="hall bath gut. everything out to studs.
 reloc toilet ~2ft left. 60in vanity per client. tile TBD — client picks.
@@ -136,20 +227,60 @@ check subfloor once demo'd, felt soft near tub…"></textarea>
       <div id="repairs"></div>
     </div>
 
-    <div class="panel" id="scopePanel">
+    <div id="scopePanel">
       <div class="row" style="margin:0 0 14px">
         <button class="ghost" id="dl">Download JSON</button>
         <button class="ghost" id="print">Open printable proposal</button>
+        <button class="ghost" id="save">Save scope</button>
+        <span id="saveNote">Saved — see Saved Scopes</span>
         <span class="tag" id="modelTag"></span>
       </div>
       <div class="paper" id="paper"></div>
     </div>
   </div>
+  </section>
+
+  <!-- ======================================================= SAVED PAGE -->
+  <section class="page" id="page-saved">
+    <h2 class="pagehead">Saved scopes</h2>
+    <div id="savedList" class="saved-grid"></div>
+  </section>
+
+  <!-- ================================================== LETTERHEAD PAGE -->
+  <section class="page" id="page-letterhead">
+    <h2 class="pagehead">Letterhead</h2>
+    <div class="lh-cols">
+      <div class="card">
+        <div class="field"><label for="lh-name">Company name</label>
+          <input id="lh-name" autocomplete="off" placeholder="Yount Construction LLC"></div>
+        <div class="field"><label for="lh-license">License</label>
+          <input id="lh-license" autocomplete="off" placeholder="Lic. #123456"></div>
+        <div class="field"><label for="lh-phone">Phone</label>
+          <input id="lh-phone" autocomplete="off" placeholder="(555) 010-0100"></div>
+        <div class="field"><label for="lh-email">Email</label>
+          <input id="lh-email" autocomplete="off" placeholder="office@example.com"></div>
+        <div class="field"><label for="lh-location">Location</label>
+          <input id="lh-location" autocomplete="off" placeholder="Springfield, MO"></div>
+        <div class="row">
+          <button id="lhSave">Save letterhead</button>
+          <span id="lhStatus">Saved</span>
+        </div>
+        <p class="hint">Stored only in company.json on this machine
+        (gitignored) — your details never leave this computer or this
+        folder. Leave everything blank for generic proposals.</p>
+      </div>
+      <div class="card">
+        <label>How the proposal header will look</label>
+        <div class="lh-preview" id="lhPreview"></div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
 "use strict";
 let SCOPE = null;
+let MODEL = null;
 const $ = id => document.getElementById(id);
 
 function el(tag, cls, text) {
@@ -159,6 +290,23 @@ function el(tag, cls, text) {
   return n;
 }
 
+/* ------------------------------------------------------- hash router */
+const PAGES = ["write", "saved", "letterhead"];
+function route() {
+  let page = (location.hash || "#write").slice(1);
+  if (!PAGES.includes(page)) page = "write";
+  PAGES.forEach(p => {
+    $("page-" + p).classList.toggle("active", p === page);
+  });
+  document.querySelectorAll("#tabs a").forEach(a => {
+    a.classList.toggle("active", a.dataset.page === page);
+  });
+  if (page === "saved") loadSaved();
+  if (page === "letterhead") loadCompany();
+}
+window.addEventListener("hashchange", route);
+
+/* ------------------------------------------------------ ollama status */
 async function checkStatus() {
   const st = $("status");
   try {
@@ -166,25 +314,23 @@ async function checkStatus() {
     const d = await r.json();
     if (d.ollama) {
       st.className = "status up";
-      st.innerHTML = "<span class='dot'></span>";
-      st.append("Ollama up — model: " + (d.model || "none usable"));
+      st.replaceChildren(el("span", "dot"));
+      st.append("Ollama up — " + (d.model || "no usable model"));
       $("banner").style.display = "none";
       $("go").disabled = !d.model;
-      if (!d.model) {
-        st.append(" (install one: ollama pull qwen2.5-coder:7b)");
-      }
       // Capability gate: the photo button exists only when a vision model does.
       $("photoBtn").style.display = d.vision_model ? "" : "none";
       return;
     }
   } catch (e) { /* server itself down; fall through */ }
-  st.className = "status";
-  st.innerHTML = "<span class='dot'></span>";
+  st.className = "status down";
+  st.replaceChildren(el("span", "dot"));
   st.append("Ollama not detected");
   $("banner").style.display = "block";
   $("go").disabled = true;
 }
 
+/* ------------------------------------------------------ scope preview */
 function renderScope(s) {
   const p = $("paper");
   p.replaceChildren();
@@ -207,13 +353,12 @@ function renderScope(s) {
     p.append(t);
   });
 
-  const list = (title, arr, map) => {
-    if (!arr || !arr.length) return null;
+  const list = (title, arr) => {
+    if (!arr || !arr.length) return;
     p.append(el("h3", null, title));
     const ul = el("ul");
-    arr.forEach(x => ul.append(map ? map(x) : el("li", null, x)));
+    arr.forEach(x => ul.append(el("li", null, x)));
     p.append(ul);
-    return ul;
   };
   list("Not included", s.exclusions);
   if (s.allowances && s.allowances.length) {
@@ -251,6 +396,7 @@ $("go").addEventListener("click", async () => {
   $("spin").className = "on";
   $("err").style.display = "none";
   $("repairs").style.display = "none";
+  $("saveNote").style.display = "none";
   try {
     const r = await fetch("/api/generate", {
       method: "POST", headers: {"Content-Type": "application/json"},
@@ -259,6 +405,8 @@ $("go").addEventListener("click", async () => {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || ("HTTP " + r.status));
     SCOPE = d.scope;
+    MODEL = d.model;
+    $("save").textContent = "Save scope";  // fresh scope, not a copy
     renderScope(SCOPE);
     $("modelTag").textContent = "model: " + d.model;
     if (d.repairs && d.repairs.length) {
@@ -342,7 +490,181 @@ $("print").addEventListener("click", async () => {
   w.document.close();
 });
 
+/* -------------------------------------------------------- save scope */
+$("save").addEventListener("click", async () => {
+  if (!SCOPE) return;
+  $("save").disabled = true;
+  $("err").style.display = "none";
+  try {
+    const r = await fetch("/api/scopes", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({scope: SCOPE, model: MODEL})
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || ("HTTP " + r.status));
+    const note = $("saveNote");
+    note.style.display = "inline";
+    setTimeout(() => { note.style.display = "none"; }, 3500);
+  } catch (e) {
+    const box = $("err");
+    box.textContent = "Save failed: " + e.message;
+    box.style.display = "block";
+  } finally {
+    $("save").disabled = false;
+  }
+});
+
+/* ------------------------------------------------------- saved scopes */
+async function loadSaved() {
+  const box = $("savedList");
+  box.replaceChildren();
+  let scopes = [];
+  try {
+    const r = await fetch("/api/scopes");
+    scopes = (await r.json()).scopes || [];
+  } catch (e) {
+    box.append(el("div", "card empty", "Could not load saved scopes: "
+                  + e.message));
+    return;
+  }
+  if (!scopes.length) {
+    const card = el("div", "card empty",
+      "No saved scopes yet — generate one and hit Save.");
+    card.style.gridColumn = "1 / -1";
+    box.append(card);
+    return;
+  }
+  scopes.forEach(s => {
+    const card = el("div", "card scope-card");
+    card.append(el("h3", null, s.title));
+    const meta = el("div", "meta");
+    const when = (s.saved_at || "").replace("T", " ").replace(/\+.*$/, " UTC");
+    meta.append(document.createTextNode("Saved " + when));
+    meta.append(el("br"));
+    meta.append(document.createTextNode(
+      s.items + (s.items === 1 ? " line item" : " line items")));
+    if (s.model) {
+      meta.append(document.createTextNode(" · "));
+      meta.append(el("span", "m", s.model));
+    }
+    card.append(meta);
+    const del = el("button", "danger", "Delete");
+    let armed = null;
+    del.addEventListener("click", async ev => {
+      ev.stopPropagation();  // never open the scope you're deleting
+      if (!del.classList.contains("armed")) {
+        del.classList.add("armed");
+        del.textContent = "Confirm delete";
+        armed = setTimeout(() => {
+          del.classList.remove("armed");
+          del.textContent = "Delete";
+        }, 4000);
+        return;
+      }
+      clearTimeout(armed);
+      del.disabled = true;
+      try {
+        const r = await fetch("/api/scopes/" + encodeURIComponent(s.id),
+                              {method: "DELETE"});
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        loadSaved();
+      } catch (e) {
+        del.disabled = false;
+        del.textContent = "Delete failed";
+      }
+    });
+    card.append(del);
+    card.addEventListener("click", () => openSaved(s.id));
+    box.append(card);
+  });
+}
+
+async function openSaved(id) {
+  try {
+    const r = await fetch("/api/scopes/" + encodeURIComponent(id));
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const record = await r.json();
+    SCOPE = record.scope;
+    MODEL = record.model || null;
+    renderScope(SCOPE);
+    $("modelTag").textContent = MODEL ? "model: " + MODEL : "";
+    $("repairs").style.display = "none";
+    $("err").style.display = "none";
+    $("save").textContent = "Save as copy";
+    location.hash = "#write";
+  } catch (e) {
+    const box = $("savedList");
+    box.prepend(el("div", "card empty", "Could not open that scope: "
+                   + e.message));
+  }
+}
+
+/* --------------------------------------------------------- letterhead */
+const LH_FIELDS = ["name", "license", "phone", "email", "location"];
+
+function lhValues() {
+  const v = {};
+  LH_FIELDS.forEach(k => {
+    const s = $("lh-" + k).value.trim();
+    if (s) v[k] = s;
+  });
+  return v;
+}
+
+function renderLhPreview() {
+  const v = lhValues();
+  const box = $("lhPreview");
+  box.replaceChildren();
+  if (v.name) {
+    const co = el("div", "co");
+    co.append(el("strong", null, v.name));
+    box.append(co);
+    const meta = LH_FIELDS.slice(1).filter(k => v[k]).map(k => v[k]);
+    if (meta.length) box.append(el("div", "co-meta", meta.join(" · ")));
+  } else {
+    box.append(el("div", "co ph",
+      "No company name — proposals will render generic."));
+  }
+  box.append(el("div", "kicker", "Scope of Work"));
+}
+
+async function loadCompany() {
+  try {
+    const r = await fetch("/api/company");
+    const d = await r.json();
+    LH_FIELDS.forEach(k => { $("lh-" + k).value = d[k] || ""; });
+  } catch (e) { /* leave the form as-is; saving still works */ }
+  renderLhPreview();
+}
+
+LH_FIELDS.forEach(k =>
+  $("lh-" + k).addEventListener("input", renderLhPreview));
+
+$("lhSave").addEventListener("click", async () => {
+  $("lhSave").disabled = true;
+  try {
+    const r = await fetch("/api/company", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(lhValues())
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const note = $("lhStatus");
+    note.textContent = "Saved";
+    note.style.color = "var(--good)";
+    note.style.display = "inline";
+    setTimeout(() => { note.style.display = "none"; }, 3000);
+  } catch (e) {
+    const note = $("lhStatus");
+    note.textContent = "Save failed: " + e.message;
+    note.style.color = "var(--bad)";
+    note.style.display = "inline";
+  } finally {
+    $("lhSave").disabled = false;
+  }
+});
+
 $("recheck").addEventListener("click", e => { e.preventDefault(); checkStatus(); });
+route();
 checkStatus();
 </script>
 </body>

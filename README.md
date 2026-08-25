@@ -41,9 +41,20 @@ Stdlib only — no pip install. If Ollama isn't running, the UI says
 Model override: `SCOPEWRIGHT_MODEL=llama3.1:8b` (otherwise it picks the
 best installed model itself).
 
-From the generated scope: **Download JSON** (the structured data) or
+From the generated scope: **Download JSON** (the structured data),
 **Open printable proposal** (a clean paper-look HTML document with
-signature lines, ready to print or PDF).
+signature lines, ready to print or PDF), or **Save scope**.
+
+The app has three pages (hash-routed, so refresh keeps your place):
+
+- **Write Scope** (`#write`) — notes in, scope out, as above.
+- **Saved Scopes** (`#saved`) — every saved scope as a card (title, date,
+  model, line-item count). Click to reopen; delete takes a second
+  confirming click. Saved scopes live as plain JSON files in `scopes/`
+  beside the app (gitignored).
+- **Letterhead** (`#letterhead`) — edit your company details with a live
+  preview of the proposal header. Stored only in `company.json` on this
+  machine.
 
 ### Photo of your notes
 
@@ -76,7 +87,8 @@ The LLM never gets the last word.
 - `scopewright_server.py` — stdlib http.server. The printable proposal is
   rendered by code from validated JSON with every string escaped; the model
   never writes HTML.
-- `scopewright.html` — the single-page UI, vanilla JS.
+- `scopewright.html` — the UI: one file, three hash-routed pages,
+  vanilla JS.
 
 ## Evals
 
@@ -106,11 +118,15 @@ a working GC before the numbers mean anything.
 
 ## Tests
 
-    python selftest.py     # 60 checks: schema, extraction, prompt, routes, render
+    python selftest.py     # 92 checks: schema, extraction, prompt, routes,
+                           # render, saved scopes, letterhead
 
-All 60 run offline — no Ollama needed; the server checks run against a
+All 92 run offline — no Ollama needed; the server checks run against a
 mocked model layer, and the "Ollama not detected" path is itself one of
-the things under test.
+the things under test. The saved-scope and letterhead checks run against
+throwaway temp paths — they never touch your real `scopes/` or
+`company.json`. The saved-scope id routes only accept `[a-z0-9-]` ids;
+the path-traversal guard is under test too.
 
 ## Screenshots
 
@@ -120,8 +136,9 @@ the things under test.
 
 ## Your letterhead
 
-Copy `company.example.json` to `company.json` (gitignored — your details stay
-local) and the printable proposal carries your company name, license, and
+Use the **Letterhead** page (or copy `company.example.json` to
+`company.json` by hand — same file, gitignored, your details stay local)
+and the printable proposal carries your company name, license, and
 contact block. Without it, proposals render generic.
 
 ## License

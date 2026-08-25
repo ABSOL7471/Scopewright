@@ -4,7 +4,9 @@ mocked-vs-live boundary is itself under test."""
 import copy
 import json
 import os
+import re
 import sys
+import tempfile
 import threading
 import urllib.error
 import urllib.request
@@ -304,6 +306,118 @@ check("UI has the photo button, capability-gated",
 
 s, b, _ = req("/api/nope")
 check("unknown route 404s", s == 404)
+
+
+def req2(path, method, payload=None):
+    """Like req() but with an explicit method (DELETE etc.)."""
+    r = urllib.request.Request(
+        base + path,
+        data=json.dumps(payload).encode() if payload is not None else None,
+        headers={"Content-Type": "application/json"}, method=method)
+    try:
+        with urllib.request.urlopen(r, timeout=10) as resp:
+            return resp.status, resp.read()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read()
+
+
+# ------------------------------------------------- saved scopes + company
+# Both stores get monkeypatched into a throwaway directory: tests must
+# never touch the real scopes/ or company.json.
+_tmp_parent = tempfile.mkdtemp(prefix="scopewright-selftest-")
+S.SCOPES_DIR = os.path.join(_tmp_parent, "scopes")
+S.COMPANY_PATH = os.path.join(_tmp_parent, "company.json")
+os.makedirs(S.SCOPES_DIR)
+_parent_before = sorted(os.listdir(_tmp_parent))
+
+s, b, _ = req("/api/scopes", {"scope": GOOD, "model": "mock-model"})
+d = json.loads(b)
+saved_id = d.get("id", "")
+check("POST /api/scopes saves and returns an id",
+      s == 200 and bool(saved_id))
+check("saved id is filesystem-safe [a-z0-9-] slug + timestamp",
+      bool(re.match(r"^[a-z0-9-]+$", saved_id))
+      and saved_id.startswith("hall-bath-gut-renovation-"))
+
+s, b, _ = req("/api/scopes")
+lst = json.loads(b)["scopes"]
+check("GET /api/scopes lists the saved scope with its summary",
+      s == 200 and len(lst) == 1 and lst[0]["id"] == saved_id
+      and lst[0]["title"] == GOOD["project_title"]
+      and lst[0]["model"] == "mock-model" and lst[0]["items"] == 2)
+
+s, b, _ = req("/api/scopes/" + saved_id)
+d = json.loads(b)
+check("GET /api/scopes/<id> returns the stored record intact",
+      s == 200 and d["scope"] == GOOD and d["model"] == "mock-model"
+      and d["saved_at"])
+
+bad_scope = copy.deepcopy(GOOD)
+bad_scope["sections"] = "not a list"
+s, b, _ = req("/api/scopes", {"scope": bad_scope})
+check("save rejects an invalid scope with 400 and the validator's words",
+      s == 400 and b"sections must be a list" in b)
+check("invalid scope wrote no file",
+      len(os.listdir(S.SCOPES_DIR)) == 1)
+
+s, b = req2("/api/scopes/..%2fcompany", "GET")
+check("percent-escape traversal id rejected with 400", s == 400)
+s, b = req2("/api/scopes/..%2f..%2fetc%2fpasswd", "DELETE")
+check("traversal id rejected on DELETE too", s == 400)
+s, b = req2("/api/scopes/has.dots", "GET")
+check("id with dots rejected with 400 (only [a-z0-9-] is legal)", s == 400)
+check("nothing escaped the scopes dir",
+      sorted(os.listdir(_tmp_parent)) == _parent_before
+      and os.listdir(S.SCOPES_DIR) == [saved_id + ".json"])
+
+s, b, _ = req("/api/scopes/no-such-scope-19991231-000000")
+check("unknown scope id 404s on GET", s == 404)
+s, b = req2("/api/scopes/no-such-scope-19991231-000000", "DELETE")
+check("unknown scope id 404s on DELETE", s == 404)
+
+s, b = req2("/api/scopes/" + saved_id, "DELETE")
+check("DELETE /api/scopes/<id> deletes",
+      s == 200 and json.loads(b) == {"deleted": True}
+      and os.listdir(S.SCOPES_DIR) == [])
+s, b, _ = req("/api/scopes")
+check("list is empty after the delete", json.loads(b)["scopes"] == [])
+
+# Company letterhead - GET/POST against the temp COMPANY_PATH only.
+s, b, _ = req("/api/company")
+check("GET /api/company -> {} when no company.json", s == 200
+      and json.loads(b) == {})
+s, b, _ = req("/api/company", {"name": "  Yount Construction LLC ",
+                               "phone": "555-0100", "license": "   ",
+                               "email": "", "hack": "dropped",
+                               "location": 42})
+d = json.loads(b)
+check("POST /api/company keeps only known keys, strips, drops empties",
+      s == 200 and d == {"name": "Yount Construction LLC",
+                         "phone": "555-0100", "location": "42"})
+s, b, _ = req("/api/company")
+check("company roundtrip: GET returns what POST saved",
+      s == 200 and json.loads(b) == d)
+check("company.json landed at COMPANY_PATH, valid JSON, no temp litter",
+      json.load(open(S.COMPANY_PATH, encoding="utf-8")) == d
+      and not [n for n in os.listdir(_tmp_parent) if n.endswith(".tmp")])
+
+# The multi-page UI: tabs, hash router, saved-scopes empty state.
+ui_text = ui_page.decode("utf-8")
+check("UI has the three nav tabs",
+      'href="#write"' in ui_text and 'href="#saved"' in ui_text
+      and 'href="#letterhead"' in ui_text)
+check("UI ships the hash router",
+      "hashchange" in ui_text and "location.hash" in ui_text)
+check("UI carries the saved-scopes empty state",
+      "No saved scopes yet — generate one and hit Save." in ui_text)
+check("UI has the letterhead form and save button",
+      'id="lh-name"' in ui_text and 'id="lhSave"' in ui_text)
+check("UI letterhead page says details stay local",
+      "never leave this computer" in ui_text
+      and "company.json" in ui_text)
+check("UI has the Save scope button",
+      'id="save"' in ui_text)
+
 srv.shutdown()
 
 # Vision model picker (pure function, offline)

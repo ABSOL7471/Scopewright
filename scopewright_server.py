@@ -13,6 +13,12 @@ Routes:
     POST /api/generate  {notes} -> {scope, repairs, model}
     POST /api/transcribe {image: base64} -> {text, model}  (vision-gated)
     POST /api/render    {scope} -> standalone printable HTML proposal
+    POST /api/scopes    {scope, model?} -> {id}   (validated before saving)
+    GET  /api/scopes    {scopes: [{id, title, saved_at, model, items}...]}
+    GET  /api/scopes/<id>     the stored {scope, saved_at, model}
+    DELETE /api/scopes/<id>   {deleted: true}
+    GET  /api/company   letterhead details from company.json (or {})
+    POST /api/company   save letterhead details (5 known keys only)
 
 The render layer is deliberately model-free: the proposal a client receives
 is assembled by code from validated JSON, with every string HTML-escaped.
@@ -23,9 +29,12 @@ import datetime
 import html
 import json
 import os
+import re
+import tempfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import llm
+import schema
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HOST = os.environ.get("SCOPEWRIGHT_HOST", "127.0.0.1")
@@ -34,19 +43,108 @@ PORT = int(os.environ.get("SCOPEWRIGHT_PORT", "8431"))
 MAX_NOTES = 20000  # characters; a job walk is not a novel
 MAX_IMAGE_B64 = 14_000_000  # ~10 MB image as base64; a phone photo fits
 
+# Saved scopes live beside the app as one JSON file each; letterhead in
+# company.json. Both stay in this folder (and out of git) - selftest
+# monkeypatches both paths so tests never touch real data.
+SCOPES_DIR = os.path.join(HERE, "scopes")
+COMPANY_PATH = os.path.join(HERE, "company.json")
+
+COMPANY_KEYS = ("name", "license", "phone", "email", "location")
+
+# Saved-scope ids are slug + timestamp, and the GET/DELETE routes accept
+# ONLY this shape - the id becomes a filename, so anything else (dots,
+# slashes, percent-escapes) is rejected before it can walk the filesystem.
+SCOPE_ID_RE = re.compile(r"^[a-z0-9-]+$")
+
 
 def load_company():
-    """Optional company.json beside this file puts your letterhead on the
+    """Optional company.json (COMPANY_PATH) puts your letterhead on the
     proposal: {"name", "license", "phone", "email", "location"} - all keys
     optional. Ships absent (generic proposals); see company.example.json.
     The file is gitignored so your details stay local."""
-    path = os.path.join(HERE, "company.json")
     try:
-        with open(path, encoding="utf-8") as f:
+        with open(COMPANY_PATH, encoding="utf-8") as f:
             data = json.load(f)
         return data if isinstance(data, dict) else {}
     except (OSError, ValueError):
         return {}
+
+
+def slugify(text):
+    """Filesystem-safe [a-z0-9-] slug of a project title."""
+    slug = re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")
+    return slug[:60] or "scope"
+
+
+def scope_path(scope_id):
+    """SCOPES_DIR/<id>.json, or None if the id isn't a legal id. The
+    regex gate means the joined path cannot leave SCOPES_DIR."""
+    if not isinstance(scope_id, str) or not SCOPE_ID_RE.match(scope_id):
+        return None
+    return os.path.join(SCOPES_DIR, scope_id + ".json")
+
+
+def save_scope(scope, model=None):
+    """Validated scope -> SCOPES_DIR/<slug>-<utc timestamp>.json.
+    Returns the new id. Caller validates first."""
+    os.makedirs(SCOPES_DIR, exist_ok=True)
+    stamp = datetime.datetime.now(datetime.timezone.utc)
+    scope_id = "%s-%s" % (slugify(scope.get("project_title")),
+                          stamp.strftime("%Y%m%d-%H%M%S"))
+    n = 2
+    while os.path.exists(os.path.join(SCOPES_DIR, scope_id + ".json")):
+        scope_id = "%s-%s-%d" % (slugify(scope.get("project_title")),
+                                 stamp.strftime("%Y%m%d-%H%M%S"), n)
+        n += 1
+    record = {"scope": scope,
+              "saved_at": stamp.isoformat(timespec="seconds")}
+    if isinstance(model, str) and model.strip():
+        record["model"] = model.strip()
+    _write_json_atomic(os.path.join(SCOPES_DIR, scope_id + ".json"), record)
+    return scope_id
+
+
+def list_scopes():
+    """Summaries of every saved scope, newest first."""
+    try:
+        names = [n for n in os.listdir(SCOPES_DIR) if n.endswith(".json")]
+    except OSError:
+        return []
+    out = []
+    for name in names:
+        try:
+            with open(os.path.join(SCOPES_DIR, name), encoding="utf-8") as f:
+                record = json.load(f)
+        except (OSError, ValueError):
+            continue  # a corrupt file must not take the list down
+        scope = record.get("scope") or {}
+        items = sum(len(sec.get("items") or [])
+                    for sec in (scope.get("sections") or [])
+                    if isinstance(sec, dict))
+        out.append({"id": name[:-len(".json")],
+                    "title": scope.get("project_title") or "Untitled",
+                    "saved_at": record.get("saved_at") or "",
+                    "model": record.get("model"),
+                    "items": items})
+    out.sort(key=lambda s: s["saved_at"], reverse=True)
+    return out
+
+
+def _write_json_atomic(path, obj):
+    """Write JSON via a temp file + os.replace so a crash mid-write never
+    leaves a truncated file behind."""
+    d = os.path.dirname(path)
+    fd, tmp = tempfile.mkstemp(dir=d, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(obj, f, indent=2)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 # ---------------------------------------------------------------- rendering
@@ -220,6 +318,34 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, f.read(), "text/html; charset=utf-8")
         if path == "/api/status":
             return self._send(200, llm.status())
+        if path == "/api/scopes":
+            return self._send(200, {"scopes": list_scopes()})
+        if path.startswith("/api/scopes/"):
+            scope_id = path[len("/api/scopes/"):]
+            fp = scope_path(scope_id)
+            if fp is None:
+                return self._send(400, {"error": "invalid scope id"})
+            try:
+                with open(fp, encoding="utf-8") as f:
+                    return self._send(200, json.load(f))
+            except (OSError, ValueError):
+                return self._send(404, {"error": "no such scope"})
+        if path == "/api/company":
+            return self._send(200, load_company())
+        return self._send(404, {"error": "no such route"})
+
+    def do_DELETE(self):
+        path = self.path.split("?", 1)[0]
+        if path.startswith("/api/scopes/"):
+            scope_id = path[len("/api/scopes/"):]
+            fp = scope_path(scope_id)
+            if fp is None:
+                return self._send(400, {"error": "invalid scope id"})
+            try:
+                os.unlink(fp)
+            except OSError:
+                return self._send(404, {"error": "no such scope"})
+            return self._send(200, {"deleted": True})
         return self._send(404, {"error": "no such route"})
 
     def do_POST(self):
@@ -265,6 +391,29 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(400, {"error": "scope must be an object"})
             return self._send(200, render_proposal(scope),
                               "text/html; charset=utf-8")
+
+        if path == "/api/scopes":
+            scope = body.get("scope")
+            ok, errors = schema.validate(scope)
+            if not ok:
+                return self._send(400, {"error": "scope is not valid: "
+                                        + "; ".join(errors[:6])})
+            scope_id = save_scope(scope, body.get("model"))
+            return self._send(200, {"id": scope_id})
+
+        if path == "/api/company":
+            if not isinstance(body, dict):
+                return self._send(400, {"error": "body must be an object"})
+            saved = {}
+            for key in COMPANY_KEYS:
+                v = body.get(key)
+                if v is None:
+                    continue
+                v = str(v).strip()
+                if v:
+                    saved[key] = v
+            _write_json_atomic(COMPANY_PATH, saved)
+            return self._send(200, saved)
 
         return self._send(404, {"error": "no such route"})
 
