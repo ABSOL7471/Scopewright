@@ -395,8 +395,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/render":
             scope = body.get("scope")
-            if not isinstance(scope, dict):
-                return self._send(400, {"error": "scope must be an object"})
+            ok, errors = schema.validate(scope)
+            if not ok:
+                return self._send(400, {"error": "scope is not valid: "
+                                        + "; ".join(errors[:6])})
             return self._send(200, render_proposal(scope),
                               "text/html; charset=utf-8")
 

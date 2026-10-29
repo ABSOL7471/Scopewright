@@ -288,6 +288,24 @@ check("render escapes model-authored HTML",
 s, b, _ = req("/api/render", {"scope": "not an object"})
 check("render rejects a non-object scope with 400", s == 400)
 
+bad_render = copy.deepcopy(GOOD)
+del bad_render["sections"][0]["items"][0]["description"]
+s, b, _ = req("/api/render", {"scope": bad_render})
+check("render rejects nested missing description with 400",
+      s == 400 and b"description" in b)
+
+bad_render = copy.deepcopy(GOOD)
+bad_render["sections"][0]["items"] = "not a list"
+s, b, _ = req("/api/render", {"scope": bad_render})
+check("render rejects malformed nested items with 400",
+      s == 400 and b"items" in b)
+
+bad_render = copy.deepcopy(GOOD)
+bad_render["open_questions"] = "check later"
+s, b, _ = req("/api/render", {"scope": bad_render})
+check("render rejects non-list open_questions with 400",
+      s == 400 and b"open_questions" in b)
+
 # Photo transcription route (vision, mocked): text comes back for HUMAN
 # review in the notes box - the route never chains into generate.
 s, b, _ = req("/api/transcribe", {"image": "aGVsbG8="})
