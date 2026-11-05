@@ -110,10 +110,11 @@ unknowns landed in open questions.
 | **invented items (hallucinations)** | **0%** | **0%** |
 | avg seconds per scope | **15.6** | 25.1 |
 
-Zero hallucinated line items on both models — the schema/validator
-architecture, not model size, carries that number. The golden cases are
-still AI-drafted and marked as such; they're being replaced case-by-case
-with real examples from a working GC, and the numbers get re-run then.
+The eval harness flagged no invented line items in these 12 AI-drafted
+cases, but this does **not** establish a real-world hallucination rate.
+Schema validation checks document **structure**, not whether generated
+claims are supported by the original notes. Contractor review and
+permissioned, de-identified real-job evaluation remain essential.
 
 ## What this does not do
 
