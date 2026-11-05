@@ -122,6 +122,14 @@
              padding: 11px 14px; color: var(--warn); font-size: 12.5px;
              line-height: 1.5; }
   #saveNote { display: none; font-size: 12px; color: var(--good); }
+  .review-gate { background: var(--warn-soft); border: 1px solid var(--border2);
+                 border-radius: 9px; padding: 12px 15px; margin: 0 0 14px;
+                 font-size: 12.5px; line-height: 1.55; }
+  .review-gate strong { color: var(--warn); }
+  .review-gate label { display: flex; align-items: flex-start; gap: 9px;
+                       margin: 7px 0 0; font-size: 12.5px; letter-spacing: normal;
+                       text-transform: none; cursor: pointer; }
+  .review-gate input { margin-top: 3px; accent-color: var(--accent); }
 
   /* the scope preview reads like the paper document it will become */
   #scopePanel { display: none; }
@@ -274,10 +282,21 @@ check subfloor once demo'd, felt soft near tub…"></textarea>
     <div id="scopePanel">
       <div class="row" style="margin:0 0 14px">
         <button class="ghost" id="dl">Download JSON</button>
-        <button class="ghost" id="print">Open printable proposal</button>
+        <button class="ghost" id="print" disabled>Open printable proposal</button>
         <button class="ghost" id="save">Save scope</button>
         <span id="saveNote">Saved — see Saved Scopes</span>
         <span class="tag" id="modelTag"></span>
+      </div>
+      <div class="review-gate" id="reviewGate">
+        <strong>Contractor review required before printing.</strong>
+        Compare the draft with the original job-walk notes. Verify every
+        quantity, material, inclusion, exclusion, allowance, and unanswered
+        question. This check does not certify accuracy or code compliance.
+        <label for="reviewCheck">
+          <input type="checkbox" id="reviewCheck">
+          I have checked this draft against the source notes and flagged
+          unresolved decisions for contractor approval before client use.
+        </label>
       </div>
       <div class="paper" id="paper"></div>
     </div>
@@ -431,6 +450,9 @@ $("setSave").addEventListener("click", async () => {
 
 /* ------------------------------------------------------ scope preview */
 function renderScope(s) {
+  // A newly generated or reopened scope always needs a fresh human review.
+  $("reviewCheck").checked = false;
+  $("print").disabled = true;
   const p = $("paper");
   p.replaceChildren();
   p.append(el("div", "kicker", "Scope of Work — draft"));
@@ -487,6 +509,10 @@ function renderScope(s) {
   }
   $("scopePanel").style.display = "block";
 }
+
+$("reviewCheck").addEventListener("change", () => {
+  $("print").disabled = !SCOPE || !$("reviewCheck").checked;
+});
 
 $("go").addEventListener("click", async () => {
   const notes = $("notes").value;
@@ -576,17 +602,27 @@ $("dl").addEventListener("click", () => {
 });
 
 $("print").addEventListener("click", async () => {
-  if (!SCOPE) return;
-  const r = await fetch("/api/render", {
-    method: "POST", headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({scope: SCOPE})
-  });
-  const html = await r.text();
-  const w = window.open("", "_blank");
-  if (!w) { alert("Pop-up blocked — allow pop-ups for this page."); return; }
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
+  if (!SCOPE || !$("reviewCheck").checked) return;
+  try {
+    const r = await fetch("/api/render", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({scope: SCOPE})
+    });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      throw new Error(d.error || ("HTTP " + r.status));
+    }
+    const html = await r.text();
+    const w = window.open("", "_blank");
+    if (!w) { alert("Pop-up blocked — allow pop-ups for this page."); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  } catch (e) {
+    const box = $("err");
+    box.textContent = "Cannot open printable proposal: " + e.message;
+    box.style.display = "block";
+  }
 });
 
 /* -------------------------------------------------------- save scope */

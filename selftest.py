@@ -451,6 +451,21 @@ check("hamburger closes on outside click and Escape",
 check("UI has the Save scope button",
       'id="save"' in ui_text)
 
+# Static UI contract: the print action must not be offered as reviewed
+# until a contractor explicitly acknowledges a source-note comparison.
+# These checks do NOT simulate browser interaction or verify note accuracy.
+check("print action starts disabled and shows contractor-review gate",
+      'id="print" disabled' in ui_text
+      and 'id="reviewCheck"' in ui_text
+      and "Contractor review required before printing" in ui_text)
+check("new and reopened scopes reset the print acknowledgement",
+      '$("reviewCheck").checked = false;' in ui_text
+      and '$("print").disabled = true;' in ui_text)
+check("print handler rejects unchecked review and handles HTTP errors",
+      'if (!SCOPE || !$("reviewCheck").checked) return;' in ui_text
+      and 'if (!r.ok)' in ui_text
+      and 'Cannot open printable proposal:' in ui_text)
+
 srv.shutdown()
 
 # Vision model picker (pure function, offline)
