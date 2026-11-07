@@ -1,7 +1,6 @@
 # Scopewright
 
-Paste your messy job-walk notes. Get a structured, client-ready Scope of
-Work. All on your own machine — the notes never leave it.
+Paste messy job-walk notes and generate a structured **draft** scope of work for contractor review. The default Ollama workflow runs locally; verify your own environment, configuration, and data handling before using real client information.
 
 You walk a job, you thumb fragments into your phone — "reloc toilet ~2ft,
 tile TBD client picks, subfloor felt soft nr tub" — and then the real work
@@ -23,11 +22,7 @@ So Scopewright treats the boring back half as the product:
   11pm if you weren't tired.
 - **Allowances** for anything the client picks. Notes say "tile TBD"? That's
   an allowance line, not a guess at a tile.
-- **Open questions**, out loud. Anything the notes didn't answer becomes a
-  listed question on the document — *"Is the subfloor sound near the tub?"*
-  — instead of a silently invented answer. The model is hard-forbidden from
-  making up measurements, brands, or dollar figures; the unknowns section is
-  the honesty valve that makes that rule survivable.
+- **Open questions**, for review. The prompt asks the model to list unresolved decisions (for example, *"Is the subfloor sound near the tub?"*). This is **not guaranteed**: missing or silently resolved questions have been observed in fictional evaluations. The contractor must compare the draft against the original notes, including measurements, selections, and unknowns.
 
 ## Quickstart
 
@@ -67,9 +62,9 @@ word must become an edit, not a line item in a client document. Without
 a vision model the button simply doesn't exist (capability-gated, like
 everything else here). Override: `SCOPEWRIGHT_VISION_MODEL=...`.
 
-## Architecture: the model proposes, the code validates
+## Architecture: the model proposes, the code validates structure
 
-The LLM never gets the last word.
+Validation checks JSON shape and field types. It **does not** establish that a generated work item, measurement, brand, exclusion, or answer is supported by the original notes. Contractor source review remains mandatory.
 
     notes -> model -> extract JSON -> repair near-misses -> validate
           -> (if invalid) ONE retry with the exact errors -> honest failure
@@ -110,10 +105,7 @@ unknowns landed in open questions.
 | **invented items (hallucinations)** | **0%** | **0%** |
 | avg seconds per scope | **15.6** | 25.1 |
 
-Zero hallucinated line items on both models — the schema/validator
-architecture, not model size, carries that number. The golden cases are
-still AI-drafted and marked as such; they're being replaced case-by-case
-with real examples from a working GC, and the numbers get re-run then.
+These numbers come from **12 AI-drafted fictional golden cases**, not permissioned real-job validation. The reported 0% is limited to the harness's forbidden-string checks; it does **not** demonstrate zero hallucinations, note-level factual accuracy, or reliable handling of unanswered questions. The schema validator checks structure rather than grounding. Real-job evaluation remains pending; see [pilot safety issue #3](https://github.com/ABSOL7471/Scopewright/issues/3).
 
 ## What this does not do
 
@@ -123,18 +115,14 @@ with real examples from a working GC, and the numbers get re-run then.
 - **It does not replace judgment.** The output is a draft for the
   contractor to review, edit, and sign — the proposal footer says exactly
   that.
-- **It does not guess.** Unknowns become open questions on the document.
-  A scope that quietly resolves "tile TBD" into a tile is a scope you'll
-  eat the difference on.
+- **It must not be trusted to resolve unknowns.** The prompt requests open questions, but generated drafts may omit or silently answer them. Check every uncertain note (such as "tile TBD") against the output before client use.
 
 ## Tests
 
-    python selftest.py     # 92 checks: schema, extraction, prompt, routes,
-                           # render, saved scopes, letterhead
+    python selftest.py     # offline regression checks; run locally and
+                           # inspect the current result before relying on it
 
-All 92 run offline — no Ollama needed; the server checks run against a
-mocked model layer, and the "Ollama not detected" path is itself one of
-the things under test. The saved-scope and letterhead checks run against
+The offline suite does not require Ollama; server checks use a mocked model layer, and the "Ollama not detected" path is tested. The historic 92-check count is not a verified current result; run the suite on your own checkout and record its output. The saved-scope and letterhead checks run against
 throwaway temp paths — they never touch your real `scopes/` or
 `company.json`. The saved-scope id routes only accept `[a-z0-9-]` ids;
 the path-traversal guard is under test too.
