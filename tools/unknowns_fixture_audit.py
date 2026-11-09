@@ -27,8 +27,8 @@ def review_markers(notes):
             boundaries = [p for p in (right_period, right_newline) if p != -1]
             right = min(boundaries) if boundaries else len(notes)
             excerpt = notes[left:right].strip()[:160]
-            out.append({"kind": kind, "marker": match.group(0), "excerpt": excerpt})
-    return sorted(out, key=lambda x: notes.find(x["excerpt"]))
+            out.append({"kind": kind, "marker": match.group(0), "excerpt": excerpt, "start": start, "end": end})
+    return sorted(out, key=lambda x: (x["start"], x["end"]))
 
 
 def selftest():
@@ -57,7 +57,12 @@ def selftest():
             assert item["marker"] in notes and item["excerpt"] in notes, (name, item)
         assert notes == original, name
         print(name + ": PASS (advisory markers: " + str(len(found)) + ")")
-    print("10/10 fictional marker fixture checks passed; NOT an LLM or UI validation")
+    repeated = review_markers("TBD. TBD.")
+    assert len(repeated) == 2, repeated
+    assert [x["start"] for x in repeated] == [0, 5], repeated
+    assert all("start" in x and "end" in x for x in repeated)
+    print("A03: PASS (duplicate markers retain distinct source offsets)")
+    print("10/10 original fictional fixtures plus A03 offset regression passed; NOT an LLM or UI validation")
 
 
 if __name__ == "__main__":
