@@ -26,7 +26,10 @@ def review_markers(notes):
             right_newline = notes.find("\n", end)
             boundaries = [p for p in (right_period, right_newline) if p != -1]
             right = min(boundaries) if boundaries else len(notes)
-            excerpt = notes[left:right].strip()[:160]
+            # Keep the actual marker in the excerpt even in long unpunctuated notes.
+            excerpt_start = left if start - left < 100 else max(left, start - 60)
+            excerpt_end = min(right, excerpt_start + 160)
+            excerpt = notes[excerpt_start:excerpt_end].strip()
             out.append({"kind": kind, "marker": match.group(0), "excerpt": excerpt, "start": start, "end": end})
     return sorted(out, key=lambda x: (x["start"], x["end"]))
 
@@ -61,6 +64,11 @@ def selftest():
     assert len(repeated) == 2, repeated
     assert [x["start"] for x in repeated] == [0, 5], repeated
     assert all("start" in x and "end" in x for x in repeated)
+    long_notes = "Kitchen " + ("existing finish " * 30) + "tile TBD and owner to select."
+    long_hits = review_markers(long_notes)
+    assert len(long_hits) == 1 and "TBD" in long_hits[0]["excerpt"], long_hits
+    assert long_hits[0]["excerpt"] in long_notes, long_hits
+    print("A04: PASS (long-note excerpt preserves actual uncertainty marker)")
     print("A03: PASS (duplicate markers retain distinct source offsets)")
     print("10/10 original fictional fixtures plus A03 offset regression passed; NOT an LLM or UI validation")
 
